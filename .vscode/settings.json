@@ -2,6 +2,7 @@
     "C_Cpp.errorSquiggles": "enabled",
     "files.associations": {
         "stats.h": "c",
-        "pthread.h": "c"
+        "pthread.h": "c",
+        "zookeeper.h": "c"
     }
 }

@@ -15,7 +15,8 @@ DEP_DIR = dependencies
 
 CC = gcc
 CFLAGS = -Wall -MMD -MP -MF $(DEP_DIR)/$*.d -I $(INC_DIR) -g
-LIBFLAGS = -L$(LIB_DIR) -ltable -lprotobuf-c
+ZFLAGS = -D THREADED
+LIBFLAGS = -L$(LIB_DIR) -ltable -lprotobuf-c -lzookeeper_mt
 ARFLAGS = -rcs
 
 PROTOC = protoc-c
@@ -52,11 +53,11 @@ $(LIB_DIR)/$(LIB).a: $(LIB_OBJ)
 
 # Compilacao cliente
 $(TABLE_CLIENT): $(LIB_DIR)/$(LIB).a $(CLIENT_OBJ)
-	$(CC) $(CFLAGS) -o $(TABLE_CLIENT) $(CLIENT_OBJ) $(LIBFLAGS)
+	$(CC) $(CFLAGS) $(ZFLAGS) -o $(TABLE_CLIENT) $(CLIENT_OBJ) $(LIBFLAGS)
 
 # Compilacao servidor
 $(TABLE_SERVER): $(LIB_DIR)/$(LIB).a $(SERVER_OBJ)
-	$(CC) $(CFLAGS) -o $(TABLE_SERVER) $(SERVER_OBJ) $(LIBFLAGS)
+	$(CC) $(CFLAGS) $(ZFLAGS) -o $(TABLE_SERVER) $(SERVER_OBJ) $(LIBFLAGS)
 
 # Compilar objetos
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
