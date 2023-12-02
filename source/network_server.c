@@ -136,12 +136,13 @@ void *thread_loop(void *arg) {
     char ip[20];
     if (res >= 0)
         strcpy(ip, inet_ntoa(clientaddr.sin_addr));
-    network_server_print(ip, clientaddr.sin_port, "Client connection estabilished!\n");
+    short port = ntohs(clientaddr.sin_port);
+    network_server_print(ip, port, "Client connection estabilished!\n");
 
     // Recebe pedidos do cliente usando a função network_receive
     MessageT *request = network_receive(sock);
     while (request != NULL) {
-        network_server_print(ip, clientaddr.sin_port, "Request received.\n");
+        network_server_print(ip, port, "Request received.\n");
         // Processa a mensagem na tabela
         if (invoke(request, hashtable) == -1) {
             message_t__free_unpacked(request, NULL);
@@ -152,13 +153,13 @@ void *thread_loop(void *arg) {
             message_t__free_unpacked(request, NULL);
             continue;
         }
-        network_server_print(ip, clientaddr.sin_port, "Answer sent.\n");
+        network_server_print(ip, port, "Answer sent.\n");
         message_t__free_unpacked(request, NULL);
         // Tentar ler o proximo pedido
         request = network_receive(sock);
     }
     dec_num_clients();
-    network_server_print(ip, clientaddr.sin_port, "Client connection closed.\n");
+    network_server_print(ip, port, "Client connection closed.\n");
     close(sock);
     return NULL;
 }
