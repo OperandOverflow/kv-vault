@@ -8,6 +8,7 @@
 
 #include "table.h"
 #include "table_skel.h"
+#include "zk_adaptor.h"
 #include "network_server.h"
 
 #include <stdio.h>
@@ -24,11 +25,14 @@ struct table_t *table;
 int sockt;
 struct table_t *next_table;
 
-char *zsocket = "localhost:2181";
+// Variaveis globais para ZooKeeper
+const char *zsocket = "127.0.0.1:2181";
 zhandle_t *handler;
 char *zroot_path = "/table_servers";
+char* znode;
 
 void inthandler() {
+    free(znode);
     network_server_close(sockt);
     table_skel_destroy(table);
     zookeeper_close(handler);
@@ -85,7 +89,7 @@ int main(int argc, char ** argv) {
     zoo_set_debug_level(ZOO_LOG_LEVEL_ERROR);
 
     // Ligar ao ZooKeeper
-    if ((handler = zookeeper_init(zsocket, connection_watcher, 2000, 0, NULL, 0)) == NULL) {
+    if ((handler = zookeeper_init(zsocket, connection_watcher, 200000, 0, NULL, 0)) == NULL) {
         perror("Error while connecting to ZooKeeper!\n");
         network_server_close(sockt);
         table_skel_destroy(table);
@@ -94,29 +98,33 @@ int main(int argc, char ** argv) {
 
     // Tentar criar o no raiz
     int new_root_len = 1024;
-	char* new_root = malloc(new_root_len);
+	char *created_zroot_path = malloc(new_root_len * sizeof(char));
     while (ZNONODE == zoo_exists(handler, zroot_path, 0, NULL)) {
-        /**
-         * \todo
-        */
-        if (ZOK != zoo_create(handler, zroot_path, NULL, -1, & ZOO_OPEN_ACL_UNSAFE, 0, new_root, new_root_len)) {
+        if (ZOK != zoo_create(handler, zroot_path, NULL, -1, 
+            & ZOO_OPEN_ACL_UNSAFE, 0, created_zroot_path, new_root_len)) {
             printf("Error creating root!\n");
+            network_server_close(sockt);
+            table_skel_destroy(table);
+            zookeeper_close(handler);
+            return -1;
         }
     }
 
+    set_server_prefix("server");
+
     // Criar um no efemero
-    int node_len = 1024;
-    char *node_efem = malloc(node_len);
-    if (ZOK != zoo_create(handler, zroot_path, NULL, -1, & ZOO_OPEN_ACL_UNSAFE, ZOO_EPHEMERAL | ZOO_SEQUENCE, node_efem, node_len)) {
-        /**
-         * \todo
-        */
+    if ((znode = register_server(handler, zroot_path, sockt)) == NULL) {
+        perror("Failed to register server on ZK!");
+        network_server_close(sockt);
+        table_skel_destroy(table);
+        zookeeper_close(handler);
+        return -1;
     }
 
     // Atender clientes (so nos dias uteis, das 9h ate as 16h)
     network_main_loop(sockt, table);
-
-    free(new_root);
+    
+    free(znode);
 
     network_server_close(sockt);
     table_skel_destroy(table);
