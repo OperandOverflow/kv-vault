@@ -11,28 +11,34 @@
 #include "zk_adaptor.h"
 #include "network_server.h"
 
-#include <stdio.h>
 #include <errno.h>
-#include <stdlib.h>
-#include <unistd.h>
+#include <stdio.h>
 #include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include <arpa/inet.h>
-#include <sys/socket.h>
 #include <netinet/in.h>
+#include <sys/socket.h>
 #include <zookeeper/zookeeper.h>
 
 struct table_t *table;
 int sockt;
+
 struct table_t *next_table;
+char* next_t_sock;
 
 // Variaveis globais para ZooKeeper
 const char *zsocket = "127.0.0.1:2181";
 zhandle_t *handler;
 char *zroot_path = "/table_servers";
-char* znode;
+char* znode = NULL;
 
 void inthandler() {
-    free(znode);
+    if (znode != NULL)
+        free(znode);
+    if (next_t_sock != NULL)
+        free(znode);
     network_server_close(sockt);
     table_skel_destroy(table);
     zookeeper_close(handler);
@@ -46,6 +52,53 @@ void connection_watcher(zhandle_t *zzh, int type, int state, const char *path, v
             inthandler();
 		}
 	} 
+}
+
+void node_watcher(zhandle_t *zzh, int type, int state, const char *path, void* context) {
+    if (state != ZOO_CONNECTED_STATE)
+        inthandler();
+    
+    if (type != ZOO_CHILD_EVENT)
+        return;
+    
+    char* next = get_next_server(handler, zroot_path, znode, node_watcher);
+
+    // Se ainda nao ha nenhum servidor seguinte
+    if (next_t_sock == NULL) {
+        next_t_sock = next;
+        /**
+         * \todo
+         * Ligar ao servidor seguinte.
+        */
+        return;
+    } 
+
+    // Se o servidor seguinte ja foi abaixo e nao ha nenhum
+    // outro para o substituir
+    if (next == NULL) {
+        next_t_sock = NULL;
+        /**
+         * \todo 
+         * network_change_server(next_t_sock);
+        */
+        return;
+    }
+
+    // Se as duas sockets forem iguais
+    if (strcmp(next, next_t_sock) == 0) {
+        free(next);
+        return;
+    }
+
+    // Se o novo servidor seguinte e diferente do atual
+    free(next_t_sock);
+    next_t_sock = next;
+    
+    /**
+     * \todo 
+     * Ligar ao novo servidor.
+     * network_change_server(next_t_sock);
+    */
 }
 
 int main(int argc, char ** argv) {
@@ -89,7 +142,7 @@ int main(int argc, char ** argv) {
     zoo_set_debug_level(ZOO_LOG_LEVEL_ERROR);
 
     // Ligar ao ZooKeeper
-    if ((handler = zookeeper_init(zsocket, connection_watcher, 200000, 0, NULL, 0)) == NULL) {
+    if ((handler = zookeeper_init(zsocket, connection_watcher, 2000000, 0, NULL, 0)) == NULL) {
         perror("Error while connecting to ZooKeeper!\n");
         network_server_close(sockt);
         table_skel_destroy(table);
@@ -98,10 +151,10 @@ int main(int argc, char ** argv) {
 
     // Tentar criar o no raiz
     int new_root_len = 1024;
-	char *created_zroot_path = malloc(new_root_len * sizeof(char));
+	char created_zroot_path[new_root_len];
     while (ZNONODE == zoo_exists(handler, zroot_path, 0, NULL)) {
         if (ZOK != zoo_create(handler, zroot_path, NULL, -1, 
-            & ZOO_OPEN_ACL_UNSAFE, 0, created_zroot_path, new_root_len)) {
+            &ZOO_OPEN_ACL_UNSAFE, 0, created_zroot_path, new_root_len)) {
             printf("Error creating root!\n");
             network_server_close(sockt);
             table_skel_destroy(table);
@@ -121,11 +174,20 @@ int main(int argc, char ** argv) {
         return -1;
     }
 
+    // Obter o socket do proximo servidor
+    next_t_sock = get_next_server(handler, zroot_path, znode, node_watcher);
+    if (next_t_sock != NULL) {
+        /**
+         * \todo
+         * Ligar ao servidor seguinte.
+        */
+    }
+
     // Atender clientes (so nos dias uteis, das 9h ate as 16h)
     network_main_loop(sockt, table);
     
     free(znode);
-
+    free(next_t_sock);
     network_server_close(sockt);
     table_skel_destroy(table);
     zookeeper_close(handler);
