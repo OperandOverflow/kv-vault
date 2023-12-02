@@ -11,6 +11,10 @@
 
 char *server_name_prefix = NULL;
 
+/* ZooKeeper Znode Data Length (1MB, the max supported) */
+#define ZDATALEN 1024 * 1024
+typedef struct String_vector zoo_string; 
+
 int set_server_prefix(char* nameprefix) {
     server_name_prefix = strdup(nameprefix);
     if (server_name_prefix == NULL)
@@ -64,7 +68,7 @@ char* register_server(zhandle_t* handler, char* path, int socket) {
     int node_name_len = 1024;
     char* node_name = malloc(node_name_len * sizeof(char));
 
-    // Criar o no efemero
+    // Criar um no efemero
     int ret;
     if ((ret = zoo_create(handler, nodepath, sock, socket_len, 
         & ZOO_OPEN_ACL_UNSAFE, ZOO_EPHEMERAL | ZOO_SEQUENCE, node_name, node_name_len)) != ZOK) {
@@ -76,7 +80,148 @@ char* register_server(zhandle_t* handler, char* path, int socket) {
     return node_name;
 }
 
+char* get_next_server(zhandle_t* handler, char* rootpath, char* node, watcher_fn watcher) {
+    if (handler == NULL || rootpath == NULL || node == NULL)
+        return NULL;
+    
+    // Alocar memoria para o buffer
+    zoo_string* node_list = malloc(sizeof(zoo_string));
+    if (node_list == NULL)
+        return NULL;
+    
+    // Obter a lista de nos
+    if (ZOK != zoo_wget_children(handler, rootpath, watcher, NULL, node_list)) {
+        free(node_list);
+        return NULL;
+    }
+
+    char* next_node = NULL;
+    // Iterar pela lista de nos
+    for (size_t i = 0; i < node_list->count; i++) {
+        // Alocar espaco para o caminho completo do no
+        char* node_fullpath = malloc(strlen(rootpath) + strlen(node_list->data[i]) + 2);
+        if (node_fullpath == NULL) { 
+            free(node_list);
+            return NULL;
+        }
+        strcpy(node_fullpath, rootpath);
+
+        // Verificar se tem / no fim do diretorio
+        if (node_fullpath[strlen(rootpath) - 1] != '/')
+            strcat(node_fullpath, "/");
+        
+        // Concatenar o nome do no ao diretorio raiz
+        strcat(node_fullpath, node_list->data[i]);
+
+        // Se o novo e igual ou menor do que o atual
+        // strcmp("002", "001") = 1
+        if (strcmp(node_fullpath, node) <= 0) {
+            free(node_fullpath);
+            continue;
+        }
+
+        // Salva-guardar o indice do no seguinte
+        next_node = node_fullpath;
+        break;
+    }
+    
+    // Se nada encontrou
+    if (next_node == NULL) {
+        free(node_list);
+        return NULL;
+    }
+
+    // Alocar buffer para obter o conteudo do no
+    char* zdata_buf = malloc(ZDATALEN * sizeof(char));
+    int zdata_len = ZDATALEN * sizeof(char);
+    if (ZOK != zoo_wget(handler, next_node, NULL, NULL, zdata_buf, &zdata_len, NULL)){
+        free(next_node);
+        free(node_list);
+        return NULL;
+    }
+
+    free(next_node);
+    free(node_list);
+    return zdata_buf;
+}
+
 char* get_head_server(zhandle_t* handler, char* path, watcher_fn watcher) {
-    /* \todo */
-    return NULL;
+    if (handler == NULL || path == NULL)
+        return NULL;
+    
+    // Alocar memoria para o buffer
+    zoo_string* node_list = malloc(sizeof(zoo_string));
+    if (node_list == NULL)
+        return NULL;
+    
+    // Obter a lista de nos
+    if (ZOK != zoo_wget_children(handler, path, watcher, NULL, node_list)) {
+        free(node_list);
+        return NULL;
+    }
+
+    char* head_node = NULL;
+    // Iterar pela lista de nos, procurar o no com o menor identificador
+    for (size_t i = 0; i < node_list->count; i++) {
+        // Alocar espaco para o caminho completo do no
+        char* node_fullpath = malloc(strlen(path) + strlen(node_list->data[i]) + 2);
+        if (node_fullpath == NULL) { 
+            free(node_list);
+            return NULL;
+        }
+        strcpy(node_fullpath, path);
+
+        // Verificar se tem / no fim do diretorio
+        if (node_fullpath[strlen(path) - 1] != '/')
+            strcat(node_fullpath, "/");
+        
+        // Concatenar o nome do no ao diretorio raiz
+        strcat(node_fullpath, node_list->data[i]);
+
+        // Se nao ainda ha nenhum no com o menor descritor
+        if (head_node == NULL) {
+            head_node = node_fullpath;
+            continue;
+        }
+
+        // Se o novo e igual ou menor do que o atual
+        // strcmp("002", "001") = 1
+        if (strcmp(node_fullpath, head_node) < 0) {
+            // Liberta o atual e substitui pelo novo
+            free(head_node);
+            head_node = node_fullpath;
+            continue;
+        }
+
+        free(node_fullpath);
+    }
+    
+    // Se nada encontrou
+    if (head_node == NULL) {
+        free(node_list);
+        return NULL;
+    }
+
+    // Alocar buffer para obter o conteudo do no
+    char* zdata_buf = malloc(ZDATALEN * sizeof(char));
+    int zdata_len = ZDATALEN * sizeof(char);
+    if (ZOK != zoo_wget(handler, head_node, NULL, NULL, zdata_buf, &zdata_len, NULL)){
+        free(head_node);
+        free(node_list);
+        return NULL;
+    }
+
+    free(head_node);
+    free(node_list);
+    return zdata_buf;
+}
+
+#define search_node(zhandle_t, char, watcher_fn) (search_node_dispatcher)(__func__, zhandle_t, char, watcher_fn)
+
+static void search_node_dispatcher(char const * caller_name, zhandle_t* handler, char* path, watcher_fn watcher) {
+
+}
+
+static void (search_node)(zhandle_t* handler, char* path, watcher_fn watcher) {
+
 }
