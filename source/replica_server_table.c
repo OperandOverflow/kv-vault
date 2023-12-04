@@ -6,6 +6,8 @@
  * Guilherme Wind   <58640>
 */
 
+#include "data.h"
+#include "entry.h"
 #include "client_stub.h"
 #include "replica_table.h"
 #include "replica_server_table.h"
@@ -108,11 +110,26 @@ int rptable_disconnect(s_rptable_t *rptable) {
     return res;
 }
 
-int rptable_put(s_rptable_t *rptable, struct entry_t *entry) {
-    if (rptable == NULL || entry == NULL)
+int rptable_put(s_rptable_t *rptable, char *key, struct data_t *value) {
+    if (rptable == NULL || key == NULL || value == NULL)
         return -1;
     if (rptable->rtable == NULL)
+        return 0;
+    
+    char *key_dup = strdup(key);
+    if (key_dup == NULL)
         return -1;
+    struct data_t *value_dup = data_dup(value);
+    if (value_dup == NULL) {
+        free(key_dup);
+        return -1;
+    }
+    struct entry_t *entry = entry_create(key_dup, value_dup);
+    if (entry == NULL) {
+        data_destroy(value_dup);
+        free(key_dup);
+        return -1;
+    }
     return rtable_put(rptable->rtable, entry);
 }
 
@@ -122,6 +139,14 @@ struct data_t *rptable_get(s_rptable_t *rptable, char *key) {
     if (rptable->rtable == NULL)
         return NULL;
     return rtable_get(rptable->rtable, key);
+}
+
+int rptable_del(s_rptable_t *rptable, char *key) {
+    if (rptable == NULL || key == NULL)
+        return -1;
+    if (rptable->rtable == NULL)
+        return 0;
+    return rtable_del(rptable->rtable, key);
 }
 
 int rptable_size(s_rptable_t *rptable) {

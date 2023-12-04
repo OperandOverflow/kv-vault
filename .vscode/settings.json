@@ -4,6 +4,8 @@
         "stats.h": "c",
         "pthread.h": "c",
         "zookeeper.h": "c",
-        "zk_adaptor.h": "c"
+        "zk_adaptor.h": "c",
+        "data.h": "c",
+        "table.h": "c"
     }
 }

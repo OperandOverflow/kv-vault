@@ -82,10 +82,12 @@ int invoke_error(MessageT *msg) {
  *      Mensagem que contem o pedido.
  * \param table
  *      Tabela sobre qual sera feita a operacao.
+ * \param rptable
+ *      Tabela replicada remota.
  * \return
  *      Retorna 0 se concluiu com sucesso, -1 caso contrario.
 */
-int invoke_put(MessageT *msg, struct table_t *table) {
+int invoke_put(MessageT *msg, struct table_t *table, s_rptable_t *rptable) {
     // Validacao do pedido
     if (msg->c_type != MESSAGE_T__C_TYPE__CT_ENTRY)
         return invoke_error(msg);
@@ -121,6 +123,13 @@ int invoke_put(MessageT *msg, struct table_t *table) {
     // Colocar o conteudo na tabela
     int result = table_put(table, msg->entry->key, data);
     if(result == -1) {
+        write_end(cctrl);
+        data_destroy(data);
+        return invoke_error(msg);
+    }
+    // Colocar o conteudo na tabela replicada
+    result = rptable_put(rptable, msg->entry->key, data);
+    if (result == -1) {
         write_end(cctrl);
         data_destroy(data);
         return invoke_error(msg);
@@ -214,7 +223,7 @@ int invoke_get(MessageT *msg, struct table_t *table) {
  * \return
  *      Retorna 0 se concluiu com sucesso, -1 caso contrario.
 */
-int invoke_delete(MessageT *msg, struct table_t *table) {
+int invoke_delete(MessageT *msg, struct table_t *table, s_rptable_t *rptable) {
     // Validacao do pedido
     if (msg->c_type != MESSAGE_T__C_TYPE__CT_KEY)
         return invoke_error(msg);
@@ -229,6 +238,12 @@ int invoke_delete(MessageT *msg, struct table_t *table) {
 
     // Remover a entrada da tabela
     int result = table_remove(table, msg->key);
+    if (result == -1) {
+        write_end(cctrl);
+        return invoke_error(msg);
+    }
+    // Remover a entrada da tabela replicada
+    result = rptable_del(rptable, msg->key);
     if (result == -1) {
         write_end(cctrl);
         return invoke_error(msg);
@@ -528,12 +543,12 @@ int table_skel_destroy(struct table_t *table) {
 int invoke(MessageT *msg, struct table_t *table, s_rptable_t *rptable) {
     if (msg == NULL)
         return -1;
-    if (table == NULL)
+    if (table == NULL || rptable == NULL)
         return invoke_error(msg);
         
     switch (msg->opcode) {
         case MESSAGE_T__OPCODE__OP_PUT:
-            return invoke_put(msg, table);
+            return invoke_put(msg, table, rptable);
             break;
         
         case MESSAGE_T__OPCODE__OP_GET:
@@ -541,7 +556,7 @@ int invoke(MessageT *msg, struct table_t *table, s_rptable_t *rptable) {
             break;
         
         case MESSAGE_T__OPCODE__OP_DEL:
-            return invoke_delete(msg, table);
+            return invoke_delete(msg, table, rptable);
             break;
 
         case MESSAGE_T__OPCODE__OP_SIZE:

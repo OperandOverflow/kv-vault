@@ -76,6 +76,9 @@ int create_root(zhandle_t *handler, char *path) {
     return 0;
 }
 
+/**
+ * <a>https://man7.org/linux/man-pages/man3/getifaddrs.3.html</a>
+*/
 char* register_server(zhandle_t* handler, char* path, int socket) {
     if (handler == NULL || path == NULL || socket < 0)
         return NULL;

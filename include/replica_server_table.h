@@ -75,11 +75,12 @@ int rptable_disconnect(s_rptable_t *rptable);
  * Função para adicionar um elemento na tabela.
  * Se a key já existe, vai substituir essa entrada pelos novos dados.
  * \param rptable
- * \param entry
+ * \param key
+ * \param data
  * \return
  *      0 (OK) ou -1 em caso de erro.
  */
-int rptable_put(s_rptable_t *rptable, struct entry_t *entry);
+int rptable_put(s_rptable_t *rptable, char *key, struct data_t *value);
 
 /* Retorna o elemento da tabela com chave key, ou NULL caso não exista
  * ou se ocorrer algum erro.
