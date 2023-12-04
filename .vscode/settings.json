@@ -3,6 +3,7 @@
     "files.associations": {
         "stats.h": "c",
         "pthread.h": "c",
-        "zookeeper.h": "c"
+        "zookeeper.h": "c",
+        "zk_adaptor.h": "c"
     }
 }
