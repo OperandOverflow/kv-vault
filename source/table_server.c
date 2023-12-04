@@ -89,7 +89,7 @@ int main(int argc, char ** argv) {
     }
 
     // Atender clientes (so nos dias uteis, das 9h ate as 16h)
-    network_main_loop(sockt, table);
+    network_main_loop(sockt, table, repl_table);
     network_server_close(sockt);
     table_skel_destroy(table);
     return 0;

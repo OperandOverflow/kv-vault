@@ -13,6 +13,8 @@
 #include "table_skel-private.h"
 #include "message-private.h"
 #include "network_client-private.h"
+#include "replica_table.h"
+#include "replica_server_table.h"
 
 #include <time.h>
 #include <errno.h>
@@ -27,8 +29,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-// Variavel global para as threads poderem aceder
+// Variaveis globais para as threads poderem aceder
 struct table_t *hashtable;
+s_rptable_t *replicatedtable;
 // Variavel global para imprimir no ecra
 pthread_mutex_t printmutex;
 
@@ -144,7 +147,7 @@ void *thread_loop(void *arg) {
     while (request != NULL) {
         network_server_print(ip, port, "Request received.\n");
         // Processa a mensagem na tabela
-        if (invoke(request, hashtable) == -1) {
+        if (invoke(request, hashtable, replicatedtable) == -1) {
             message_t__free_unpacked(request, NULL);
             break;
         }
@@ -165,7 +168,7 @@ void *thread_loop(void *arg) {
 }
 
 
-int network_main_loop(int listening_socket, struct table_t *table){
+int network_main_loop(int listening_socket, struct table_t *table, s_rptable_t *rptable) {
     if (table == NULL)
         return -1;
     
@@ -175,6 +178,7 @@ int network_main_loop(int listening_socket, struct table_t *table){
     int connsockfd;
     signal(SIGPIPE, SIG_IGN);
     hashtable = table;
+    replicatedtable = rptable;
 
     // O loop principal continua a aceitar conexões de clientes
     while ((connsockfd = accept(listening_socket, (struct sockaddr *)&client, &size_client)) != -1) {

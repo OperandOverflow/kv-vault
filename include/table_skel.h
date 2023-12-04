@@ -3,6 +3,8 @@
 
 #include "table.h"
 #include "sdmessage.pb-c.h"
+#include "replica_table.h"
+#include "replica_server_table.h"
 
 /* Inicia o skeleton da tabela.
  * O main() do servidor deve chamar esta função antes de poder usar a
@@ -18,10 +20,11 @@ struct table_t *table_skel_init(int n_lists);
  */
 int table_skel_destroy(struct table_t *table);
 
-/* Executa na tabela table a operação indicada pelo opcode contido em msg 
- * e utiliza a mesma estrutura MessageT para devolver o resultado.
+/* Executa nas tabelas table e rptable a operação indicada pelo opcode  
+ * contido em msg e utiliza a mesma estrutura MessageT para devolver o 
+ * resultado.
  * Retorna 0 (OK) ou -1 em caso de erro.
 */
-int invoke(MessageT *msg, struct table_t *table);
+int invoke(MessageT *msg, struct table_t *table, s_rptable_t *rptable);
 
 #endif

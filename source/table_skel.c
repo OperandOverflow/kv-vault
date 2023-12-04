@@ -13,6 +13,8 @@
 #include "sdmessage.pb-c.h"
 #include "stats.h"
 #include "synchronization.h"
+#include "replica_table.h"
+#include "replica_server_table.h"
 
 #include <time.h>
 #include <stdio.h>
@@ -523,7 +525,7 @@ int table_skel_destroy(struct table_t *table) {
     return result;
 }
 
-int invoke(MessageT *msg, struct table_t *table) {
+int invoke(MessageT *msg, struct table_t *table, s_rptable_t *rptable) {
     if (msg == NULL)
         return -1;
     if (table == NULL)
