@@ -9,9 +9,9 @@
 #include "data.h"
 #include "entry.h"
 #include "table.h"
-#include "table-private.h"
 #include "client_stub.h"
 #include "replica_table.h"
+#include "table-private.h"
 #include "replica_server_table.h"
 #include "client_stub-private.h"
 
@@ -204,6 +204,7 @@ int rptable_sync(s_rptable_t *rptable, struct table_t *table) {
             return -1;
         }
 
+        // Se ocorrer erro
         if (table_put(table, key, data) == -1) {
             data_destroy(data);
             free(key);
@@ -268,7 +269,9 @@ int rptable_put(s_rptable_t *rptable, char *key, struct data_t *value) {
         free(key_dup);
         return -1;
     }
-    return rtable_put(rptable->rtable, entry);
+    int res = rtable_put(rptable->rtable, entry);
+    entry_destroy(entry);
+    return res;
 }
 
 struct data_t *rptable_get(s_rptable_t *rptable, char *key) {
@@ -362,8 +365,10 @@ void zknode_watcher(zhandle_t *zzh, int type, int state, const char *path, void*
     if (table->rptable_socket == NULL && table->rtable == NULL) {
         table->rptable_socket = next_table;
         // Se nao conseguir ligar ao novo servidor
-        if ((table->rtable = rtable_connect(next_table)) == NULL)
+        if ((table->rtable = rtable_connect(next_table)) == NULL) {
+            free(next_table);
             rptable_fhandler(RPTABLE_CONNECTION_FAILED);
+        }
         return;
     }
 

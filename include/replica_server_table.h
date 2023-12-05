@@ -8,9 +8,9 @@
 
 /**
  * Módulo que contém definicao de estrutura e de métodos 
- * que podem ser usadospara fazer operacoes sobre a  
- * tabela replicada, abstraindo a comunicação com o 
- * ZooKeeper e fornece uma interface semelhante ao 
+ * que podem ser usados pelo servidor para fazer operacoes   
+ * sobre a tabela replicada, abstraindo a comunicação  
+ * com o ZooKeeper e fornece uma interface semelhante ao 
  * client_stub.
 */
 
@@ -39,7 +39,7 @@ typedef struct server_rptable_t {
 } s_rptable_t;
 
 /**
- * Funcao que deve ser implementada pelo cliente/servidor,
+ * Funcao que deve ser implementada pelo servidor,
  * apenas deve retornar o objeto.
 */
 typedef s_rptable_t *(*node_watcher)();
