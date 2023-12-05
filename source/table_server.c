@@ -69,13 +69,13 @@ int main(int argc, char ** argv) {
 
     // Inicializar o socket do servidor
     if ((sockt = network_server_init((unsigned short) port)) == -1) {
-        perror("Error while initializing server!\n");
+        perror("Error while initializing server!");
         return -1;
     }
 
     // Inicializar a tabela
     if ((table = table_skel_init(tablesize)) == NULL) {
-        perror("Error while initializing table!\n");
+        perror("Error while initializing table!");
         network_server_close(sockt);
         return -1;
     }
@@ -87,7 +87,16 @@ int main(int argc, char ** argv) {
         repl_table = rptable_connect_zksock(argv[3], sockt, table_watcher, table_fhandler);
     
     if (repl_table == NULL) {
-        perror("Error while initializing replicated table!\n");
+        perror("Error while initializing replicated table!");
+        table_skel_destroy(table);
+        network_server_close(sockt);
+        return -1;
+    }
+
+    // Sincronizar com a tabela anterior
+    if (rptable_sync(repl_table, table) == -1) {
+        perror("Error while initializing replicated table!");
+        rptable_disconnect(repl_table);
         table_skel_destroy(table);
         network_server_close(sockt);
         return -1;
