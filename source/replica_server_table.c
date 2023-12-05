@@ -154,19 +154,73 @@ s_rptable_t *rptable_connect_zksock(char* zksock, int sock, node_watcher watcher
 int rptable_sync(s_rptable_t *rptable, struct table_t *table) {
     if (rptable == NULL || table == NULL)
         return -1;
-    if (rptable->handler == NULL || rptable->znode || NULL)
+    if (rptable->handler == NULL || rptable->znode == NULL)
         return -1;
-    if (rptable->rptable_socket == NULL || rptable->rtable || NULL)
-        return 0;
     
     // Obter o descritor de socket do servidor anterior
-    char *prev_server = get_prev_server(rptable->handler, RPTABLE_ZK_ROOT_PATH,
+    char *prev_server_sock = get_prev_server(rptable->handler, RPTABLE_ZK_ROOT_PATH,
                             rptable->znode, zknode_watcher);
-    
-    if (prev_server == NULL)
+    // Se ocorreu um erro
+    if (prev_server_sock == NULL)
         return -1;
-    return 0;
     
+    // Se nao encontrou o servidor anterior
+    if (prev_server_sock == ZDATA_NOT_FOUND)
+        return 0;
+    
+    // Estabelecer ligacao ao servidor
+    struct rtable_t *prev_server = rtable_connect(prev_server_sock);
+    if (prev_server == NULL) {
+        free(prev_server_sock);
+        return -1;
+    }
+    free(prev_server_sock);
+
+    // Obter a lista de entries
+    struct entry_t **entries = rtable_get_table(prev_server);
+    if (entries == NULL) {
+        rtable_disconnect(prev_server);
+        return -1;
+    }
+
+    // Iterar pela array de entries
+    int index = 0;
+    struct entry_t *it_entry = entries[index];
+    while (it_entry != NULL) {
+        // Duplicar a chave
+        char *key = strdup(it_entry->key);
+        if (key == NULL) {
+            rtable_free_entries(entries);
+            rtable_disconnect(prev_server);
+            return -1;
+        }
+
+        // Duplicar o valor
+        struct data_t *data = data_dup(it_entry->value);
+        if (data == NULL) {
+            free(key);
+            rtable_free_entries(entries);
+            rtable_disconnect(prev_server);
+            return -1;
+        }
+
+        if (table_put(table, key, data) == -1) {
+            data_destroy(data);
+            free(key);
+            rtable_free_entries(entries);
+            rtable_disconnect(prev_server);
+            return -1;
+        }
+
+        data_destroy(data);
+        free(key);
+
+        index++;
+        it_entry = entries[index];
+    }
+    rtable_free_entries(entries);
+    rtable_disconnect(prev_server);
+    return 0;
 }
 
 int rptable_disconnect(s_rptable_t *rptable) {
@@ -299,7 +353,7 @@ void zknode_watcher(zhandle_t *zzh, int type, int state, const char *path, void*
 
     // Se nao foi encontrado nenhum servidor seguinte 
     // e o atual nao existe
-    if (next_table == NULL && 
+    if ((next_table == NULL) && 
         table->rptable_socket == NULL &&
         table->rtable == NULL)
         return;
@@ -314,7 +368,7 @@ void zknode_watcher(zhandle_t *zzh, int type, int state, const char *path, void*
     }
 
     // Se esta ligado a um servidor e o novo é NULL (o atual foi abaixo)
-    if (next_table == NULL && 
+    if ((next_table == NULL) && 
         table->rptable_socket != NULL && 
         table->rtable != NULL) {
         rtable_disconnect(table->rtable);
