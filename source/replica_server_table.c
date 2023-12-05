@@ -8,6 +8,8 @@
 
 #include "data.h"
 #include "entry.h"
+#include "table.h"
+#include "table-private.h"
 #include "client_stub.h"
 #include "replica_table.h"
 #include "replica_server_table.h"
@@ -147,6 +149,24 @@ s_rptable_t *rptable_connect_zksock(char* zksock, int sock, node_watcher watcher
     free(table_ptr);
     err_rptable_malloc:
     return NULL;
+}
+
+int rptable_sync(s_rptable_t *rptable, struct table_t *table) {
+    if (rptable == NULL || table == NULL)
+        return -1;
+    if (rptable->handler == NULL || rptable->znode || NULL)
+        return -1;
+    if (rptable->rptable_socket == NULL || rptable->rtable || NULL)
+        return 0;
+    
+    // Obter o descritor de socket do servidor anterior
+    char *prev_server = get_prev_server(rptable->handler, RPTABLE_ZK_ROOT_PATH,
+                            rptable->znode, zknode_watcher);
+    
+    if (prev_server == NULL)
+        return -1;
+    return 0;
+    
 }
 
 int rptable_disconnect(s_rptable_t *rptable) {

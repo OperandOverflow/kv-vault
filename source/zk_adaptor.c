@@ -266,6 +266,101 @@ char* get_next_server(zhandle_t* handler, char* rootpath, char* node, watcher_fn
     return zdata_buf;
 }
 
+char* get_prev_server(zhandle_t* handler, char* rootpath, char* node, watcher_fn watcher) {
+    if (handler == NULL || rootpath == NULL || node == NULL)
+        return NULL;
+    
+    // Alocar memoria para o buffer
+    zoo_string* node_list = malloc(sizeof(zoo_string));
+    if (node_list == NULL)
+        return NULL;
+    
+    // Obter a lista de nos
+    if (ZOK != zoo_wget_children(handler, rootpath, watcher, NULL, node_list)) {
+        free(node_list);
+        return NULL;
+    }
+
+    char* next_node = NULL;
+    // Iterar pela lista de nos
+    for (size_t i = 0; i < node_list->count; i++) {
+        // Alocar espaco para o caminho completo do no
+        char* node_fullpath = malloc(strlen(rootpath) + strlen(node_list->data[i]) + 2);
+        if (node_fullpath == NULL) { 
+            free(node_list);
+            return NULL;
+        }
+        strcpy(node_fullpath, rootpath);
+
+        // Verificar se tem / no fim do diretorio
+        if (node_fullpath[strlen(rootpath) - 1] != '/')
+            strcat(node_fullpath, "/");
+        
+        // Concatenar o nome do no ao diretorio raiz
+        strcat(node_fullpath, node_list->data[i]);
+
+        /**
+         * A ideia aqui é procurar o nó com o identificador
+         * imediatamente a seguir do nó atual, ou seja, o nó
+         * com identificador maior que o atual mas menor do 
+         * que todos os outros nós.
+         * 
+         * Exemplo:
+         * Sendo o nó atual é server004 e se aplicar esta 
+         * função aos nós:
+         *   server001, server004, server002, server003;
+         * o resultado retornado devia ser server003 em
+         * vez de server001.
+        */
+
+        // Se o novo e igual ou menor do que o atual
+        // strcmp("002", "001") = 1
+        // strcmp("001", "002") = -1
+        if (strcmp(node_fullpath, node) >= 0) {
+            free(node_fullpath);
+            continue;
+        }
+
+        // Cond: node_fullpath tem identificador menor
+        
+        // Se ainda nao ha nenhum no candidato
+        if (next_node == NULL) {
+            next_node = node_fullpath;
+            continue;
+        }
+
+        // Se o node_fullpath e maior do que o no guardado
+        if (strcmp(node_fullpath, next_node) >= 0) {
+            // Substitui o guardado
+            free(next_node);
+            next_node = node_fullpath;
+            continue;
+        }
+
+        free(node_fullpath);        
+    }
+    
+    // Se nada encontrou
+    if (next_node == NULL) {
+        free(node_list);
+        return NULL;
+    }
+
+    // Alocar buffer para obter o conteudo do no
+    char* zdata_buf = malloc(ZDATALEN * sizeof(char));
+    int zdata_len = ZDATALEN * sizeof(char);
+    if (ZOK != zoo_wget(handler, next_node, NULL, NULL, zdata_buf, &zdata_len, NULL)){
+        free(zdata_buf);
+        free(next_node);
+        free(node_list);
+        return NULL;
+    }
+
+    free(next_node);
+    free(node_list);
+    return zdata_buf;
+}
+
 char* get_head_server(zhandle_t* handler, char* path, watcher_fn watcher) {
     if (handler == NULL || path == NULL)
         return NULL;

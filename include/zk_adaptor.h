@@ -104,6 +104,22 @@ char* register_server(zhandle_t* handler, char* path, int socket);
 */
 char* get_next_server(zhandle_t* handler, char* rootpath, char* node, watcher_fn watcher);
 
+/**
+ * Retorna o descritor do servidor anterior em string 
+ * no formato <ip>:<porto>.
+ * \param handler
+ *      ZooKeeper handler.
+ * \param rootpath
+ *      Caminho completo ao diretorio que contem os nos.
+ * \param node
+ *      Caminho completo ao no atual.
+ * \param watcher
+ *      Funcao watcher para observer o diretorio que tem os nos.
+ * \return 
+ *      Descritor do socket do servidor anterior ou NULL se 
+ *      nao houver nenhum servidor anterior ou ocorreu erro.
+*/
+char* get_prev_server(zhandle_t* handler, char* rootpath, char* node, watcher_fn watcher);
 // =========================================================
 //                  Operacoes do cliente
 // =========================================================

@@ -57,7 +57,7 @@ typedef s_rptable_t *(*node_watcher)();
  *      Funcao que escuta dos eventos 
  * \param handler
  *      Funcao que faz o tratamento da falha da 
- *      tabela replicada.
+ *      tabela replicada.RPTABLE_ZK_ROOT_PATH
  * \return
  *      Apontador a s_rptable_t ou NULL em caso de erro.
 */
@@ -79,6 +79,13 @@ s_rptable_t *rptable_connect(int sock, node_watcher watcher, failure_handler han
  *      Apontador a s_rptable_t ou NULL em caso de erro.
 */
 s_rptable_t *rptable_connect_zksock(char* zksock, int sock, node_watcher watcher, failure_handler handler);
+
+/**
+ * Sincroniza a tabela local com a tabela no servidor anterior.
+ * \return
+ *      0 (OK) ou -1 em caso de erro.
+*/
+int rptable_sync(s_rptable_t *rptable, struct table_t *table);
 
 /**
  * Desliga a ligacao com a tabela replicada.
