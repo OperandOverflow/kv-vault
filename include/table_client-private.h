@@ -11,6 +11,8 @@
 
 #include "client_stub.h"
 #include "client_stub-private.h"
+#include "replica_table.h"
+#include "replica_client_table.h"
 
 // ==================================================================
 //                            Shell
@@ -100,7 +102,7 @@ void inthandler();
  *      0 se a operacao foi concluida com sucesso, -1
  *      caso contrario.
 */
-int put(struct rtable_t *rtable, char *key, char* value);
+int put(c_rptable_t *rtable, char *key, char* value);
 
 
 
@@ -114,7 +116,7 @@ int put(struct rtable_t *rtable, char *key, char* value);
  *      0 se a operacao foi concluida com sucesso, -1
  *      caso contrario.
 */
-int get(struct rtable_t *rtable, char *key);
+int get(c_rptable_t *rtable, char *key);
 
 
 /**
@@ -127,7 +129,7 @@ int get(struct rtable_t *rtable, char *key);
  *      0 se a operacao foi concluida com sucesso, -1
  *      caso contrario.
 */
-int delete(struct rtable_t *rtable, char *key);
+int delete(c_rptable_t *rtable, char *key);
 
 /**
  * Imprime o tamanho da tabela.
@@ -137,7 +139,7 @@ int delete(struct rtable_t *rtable, char *key);
  *      0 se a operacao foi concluida com sucesso, -1
  *      caso contrario.
 */
-int size(struct rtable_t *rtable);
+int size(c_rptable_t *rtable);
 
 /**
  * Imprime as estatisticas do servidor e da tabela.
@@ -147,7 +149,7 @@ int size(struct rtable_t *rtable);
  *      0 se a operacao foi concluida com sucesso, -1
  *      caso contrario.
 */
-int stats(struct rtable_t *rtable);
+int stats(c_rptable_t *rtable);
 
 /**
  * Imprime todas as chaves contidas na tabela.
@@ -157,7 +159,7 @@ int stats(struct rtable_t *rtable);
  *      0 se a operacao foi concluida com sucesso, -1
  *      caso contrario.
 */  
-int getkeys(struct rtable_t *rtable);
+int getkeys(c_rptable_t *rtable);
 
 /**
  * Imprime todas as entradas da tabela.
@@ -167,6 +169,6 @@ int getkeys(struct rtable_t *rtable);
  *      0 se a operacao foi concluida com sucesso, -1
  *      caso contrario.
 */
-int gettable(struct rtable_t *rtable);
+int gettable(c_rptable_t *rtable);
 
 #endif

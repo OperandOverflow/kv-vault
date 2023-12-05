@@ -6,12 +6,14 @@
  * Guilherme Wind   <58640>
 */
 
-#include "table_client-private.h"
-#include "client_stub.h"
-#include "client_stub-private.h"
 #include "data.h"
 #include "entry.h"
 #include "stats.h"
+#include "client_stub.h"
+#include "replica_table.h"
+#include "client_stub-private.h"
+#include "replica_client_table.h"
+#include "table_client-private.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -26,7 +28,20 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-struct rtable_t *connection;
+c_rptable_t *connection;
+
+void inthandler() {
+    rptable_disconnect(connection);
+    exit(0);
+}
+
+c_rptable_t *table_watcher() {
+    return connection;
+}
+
+void table_fhandler(int errcode) {
+    inthandler();
+}
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
@@ -35,7 +50,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Estabelecer ligacao ao servidor
-    connection = rtable_connect(argv[1]);
+    connection = rptable_connect_zksock(argv[1], table_watcher, table_fhandler);
     if (connection == NULL) {
         printf(ERROR_CONNECTION);
         return -1;
@@ -142,7 +157,7 @@ int main(int argc, char *argv[]) {
         } else
         if (strcasecmp(command, "q") == 0 ||
             strcasecmp(command, "quit") == 0) {
-            rtable_disconnect(connection);
+            rptable_disconnect(connection);
             printf(SUCCESS_EXIT);
             exit(0);
         } else
@@ -161,12 +176,8 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-void inthandler() {
-    rtable_disconnect(connection);
-    exit(0);
-}
 
-int put(struct rtable_t *rtable, char *key, char* value) {
+int put(c_rptable_t *rtable, char *key, char* value) {
     if (rtable == NULL || key == NULL || value == NULL)
         return -1;
     
@@ -195,33 +206,26 @@ int put(struct rtable_t *rtable, char *key, char* value) {
         data_destroy(dataptr);
         return -1;
     }
-    
-    // Criar estrutura entry_t
-    struct entry_t *entryptr = entry_create(keyptr, dataptr);
-    if (entryptr == NULL) {
-        free(keyptr);
-        data_destroy(dataptr);
-        printf("Error creating entry_t structure to send!\n");
-        return -1;
-    }
 
     // Enviar para o servidor
-    int result = rtable_put(rtable, entryptr);
+    int result = rptable_put(rtable, keyptr, dataptr);
     if (result == -1) {
         printf("Error while sending put request!\n");
-        entry_destroy(entryptr);
+        data_destroy(dataptr);
+        free(keyptr);
         return -1;
     }
-    entry_destroy(entryptr);
+    data_destroy(dataptr);
+    free(keyptr);
     return 0;
 }
 
-int get(struct rtable_t *rtable, char *key) {
+int get(c_rptable_t *rtable, char *key) {
     if (rtable == NULL || key == NULL)
         return -1;
     
     // Obter o valor
-    struct data_t *dataptr = rtable_get(rtable, key);
+    struct data_t *dataptr = rptable_get(rtable, key);
     if (dataptr == NULL) {
         printf(ERROR_GET);
         return -1;
@@ -241,11 +245,11 @@ int get(struct rtable_t *rtable, char *key) {
     return 0;
 }
 
-int delete(struct rtable_t *rtable, char *key) {
+int delete(c_rptable_t *rtable, char *key) {
     if (rtable == NULL || key == NULL)
         return -1;
     
-    int result = rtable_del(rtable, key);
+    int result = rptable_del(rtable, key);
     if (result == -1) {
         printf(ERROR_DEL);
         return -1;
@@ -253,11 +257,11 @@ int delete(struct rtable_t *rtable, char *key) {
     return 0;
 }
 
-int size(struct rtable_t *rtable) {
+int size(c_rptable_t *rtable) {
     if (rtable == NULL)
         return -1;
     int result = -1;
-    result = rtable_size(rtable);
+    result = rptable_size(rtable);
     if (result == -1){
         printf(ERROR_SIZE);
         return -1;
@@ -268,11 +272,11 @@ int size(struct rtable_t *rtable) {
     return 0;
 }
 
-int stats(struct rtable_t *rtable) {
+int stats(c_rptable_t *rtable) {
     if (rtable == NULL)
         return -1;
 
-    struct statistics_t *stats = rtable_stats(rtable);
+    struct statistics_t *stats = rptable_stats(rtable);
     if (stats == NULL) {
         printf(ERROR_STATS);
         return -1;
@@ -284,11 +288,11 @@ int stats(struct rtable_t *rtable) {
     return 0;
 }
 
-int getkeys(struct rtable_t *rtable) {
+int getkeys(c_rptable_t *rtable) {
     if (rtable == NULL)
         return -1;
     char** keys = NULL;
-    keys = rtable_get_keys(rtable);
+    keys = rptable_get_keys(rtable);
     if (keys == NULL) {
         printf(ERROR_GETKEYS);
         return -1;
@@ -305,15 +309,15 @@ int getkeys(struct rtable_t *rtable) {
         index++;
     }
 
-    rtable_free_keys(keys);
+    rptable_free_keys(keys);
 
     return 0;
 }
 
-int gettable(struct rtable_t *rtable) {
+int gettable(c_rptable_t *rtable) {
     if (rtable == NULL)
         return -1;
-    struct entry_t **entries = rtable_get_table(rtable);
+    struct entry_t **entries = rptable_get_table(rtable);
     if (entries == NULL) {
         printf(ERROR_GETTABLE);
         return -1;
@@ -328,6 +332,6 @@ int gettable(struct rtable_t *rtable) {
         printf(AUX_GETTABLE_LINE, entries[index]->key, value);
         index++;
     }
-    rtable_free_entries(entries);
+    rptable_free_entries(entries);
     return 0;
 }

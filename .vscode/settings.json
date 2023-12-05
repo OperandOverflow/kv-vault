@@ -9,6 +9,7 @@
         "if_link.h": "c",
         "netdb.h": "c",
         "table-private.h": "c",
-        "table.h": "c"
+        "table.h": "c",
+        "client_stub-private.h": "c"
     }
 }
