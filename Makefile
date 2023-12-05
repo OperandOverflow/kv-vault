@@ -37,7 +37,7 @@ TABLE_SERVER = $(BIN_DIR)/table_server
 
 
 # Fontes e objetos do cliente
-CLIENT_SRC = $(SRC_DIR)/sdmessage.pb-c.c $(SRC_DIR)/network_client.c $(SRC_DIR)/client_stub.c $(SRC_DIR)/table_client.c $(SRC_DIR)/message.c $(SRC_DIR)/stats.c $(SRC_DIR)/synchronization.c $(SRC_DIR)/zk_adaptor.c
+CLIENT_SRC = $(SRC_DIR)/sdmessage.pb-c.c $(SRC_DIR)/network_client.c $(SRC_DIR)/client_stub.c $(SRC_DIR)/table_client.c $(SRC_DIR)/message.c $(SRC_DIR)/stats.c $(SRC_DIR)/synchronization.c $(SRC_DIR)/zk_adaptor.c $(SRC_DIR)/replica_client_table.c
 CLIENT_OBJ = $(patsubst $(SRC_DIR)%.c,$(OBJ_DIR)%.o,$(CLIENT_SRC))
 
 # Fontes e objetos do servidor
