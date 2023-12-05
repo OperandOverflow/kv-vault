@@ -139,8 +139,9 @@ char* get_prev_server(zhandle_t* handler, char* rootpath, char* node, watcher_fn
  * \param watcher
  *      Funcao que e invocada quando houver alguma alteracao no no.
  * \return
- *      Descritor do socket do servidor na cabeca, ou NULL 
- *      se nao encontrar nenhum servidor ou ocorreu um erro.
+ *      Descritor do socket do servidor na cabeca ou ZDATA_NOT_FOUND
+ *      caso nao tenha encontrado o proximo servidor ou NULL em 
+ *      caso de erro.
 */
 char* get_head_server(zhandle_t* handler, char* path, watcher_fn watcher);
 
@@ -154,8 +155,9 @@ char* get_head_server(zhandle_t* handler, char* path, watcher_fn watcher);
  * \param watcher
  *      Funcao que e invocada quando houver alguma alteracao no no.
  * \return
- *      Descritor do socket do servidor na cauda, ou NULL se nao
- *      houver nenhum servidor ou ocorreu um erro.
+ *      Descritor do socket do servidor na cauda ou ZDATA_NOT_FOUND
+ *      caso nao tenha encontrado o proximo servidor ou NULL em 
+ *      caso de erro.
 */
 char* get_tail_server(zhandle_t* handler, char* path, watcher_fn watcher);
 

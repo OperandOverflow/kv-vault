@@ -429,7 +429,7 @@ char* get_head_server(zhandle_t* handler, char* path, watcher_fn watcher) {
     // Se nada encontrou
     if (head_node == NULL) {
         free(node_list);
-        return NULL;
+        return ZDATA_NOT_FOUND;
     }
 
     // Alocar buffer para obter o conteudo do no
@@ -501,7 +501,7 @@ char* get_tail_server(zhandle_t* handler, char* path, watcher_fn watcher) {
     // Se nada encontrou
     if (tail_node == NULL) {
         free(node_list);
-        return NULL;
+        return ZDATA_NOT_FOUND;
     }
 
     // Alocar buffer para obter o conteudo do no
