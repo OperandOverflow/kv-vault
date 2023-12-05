@@ -19,6 +19,9 @@
 
 /* ZooKeeper Znode Data Length (1MB, the max supported) */
 #define ZDATALEN 1024 * 1024
+#define ZDATA_NOT_FOUND ((void *)1)
+
+#define LOOPBACK_IP "127.0.0.1"
 typedef struct String_vector zoo_string; 
 
 // =========================================================
@@ -99,8 +102,9 @@ char* register_server(zhandle_t* handler, char* path, int socket);
  * \param watcher
  *      Funcao watcher para observer o diretorio que tem os nos.
  * \return 
- *      Descritor do socket do servidor seguinte ou NULL se 
- *      nao houver nenhum servidor seguinte ou ocorreu erro.
+ *      Descritor do socket do servidor seguinte ou NULL
+ *      caso nao tenha encontrado o proximo servidor ou NULL em 
+ *      caso de erro.
 */
 char* get_next_server(zhandle_t* handler, char* rootpath, char* node, watcher_fn watcher);
 
@@ -116,8 +120,9 @@ char* get_next_server(zhandle_t* handler, char* rootpath, char* node, watcher_fn
  * \param watcher
  *      Funcao watcher para observer o diretorio que tem os nos.
  * \return 
- *      Descritor do socket do servidor anterior ou NULL se 
- *      nao houver nenhum servidor anterior ou ocorreu erro.
+ *      Descritor do socket do servidor seguinte ou ZDATA_NOT_FOUND
+ *      caso nao tenha encontrado o proximo servidor ou NULL em 
+ *      caso de erro.
 */
 char* get_prev_server(zhandle_t* handler, char* rootpath, char* node, watcher_fn watcher);
 // =========================================================

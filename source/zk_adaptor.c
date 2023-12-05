@@ -21,10 +21,12 @@
 
 char *server_name_prefix = NULL;
 
+/**
+ * Retorna o endereco da subrede da maquina.
+ * \return
+ *      O endereco IP da maquina ou NULL em caso de erro.
+*/
 char *get_ip_address() {
-    /**
-     * \todo
-    */
     struct ifaddrs *ifaddr;
     int family, s;
     char host[1025];
@@ -40,18 +42,19 @@ char *get_ip_address() {
 
         // Se a familia for de IPv4
         if (family == AF_INET) {
-            s = getnameinfo(ifa->ifa_addr,
-                    (family == AF_INET) ? sizeof(struct sockaddr_in) :
-                                            sizeof(struct sockaddr_in6),
-                    host, 1025,
-                    NULL, 0, 1);
+            s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in),
+                            host, 1025, NULL, 0, 1);
             if (s != 0) {
-                printf("getnameinfo() failed: %s\n", gai_strerror(s));
+                freeifaddrs(ifaddr);
                 return NULL;
             }
 
-            printf("\t\taddress: <%s>\n", host);
-
+            // Se for igual ao endereco do loopback
+            if (strcmp(host, LOOPBACK_IP) == 0)
+                continue;
+            
+            freeifaddrs(ifaddr);
+            return strdup(host);
         }
     }
 
@@ -147,9 +150,20 @@ char* register_server(zhandle_t* handler, char* path, int socket) {
     char port_str[20];
     snprintf(port_str, sizeof(port_str), "%d", port);
 
+    // Obter o ip externo
+    char *ip = get_ip_address();
+    if (ip == NULL) {
+        free(nodepath);
+        return NULL;
+    }
+
+    char ipaddr[strlen(ip)+1];
+    strcpy(ipaddr, ip);
+    free(ip);
+
     // Concatenar o ip e porto
     char sock[32];
-    strcpy(sock, inet_ntoa(localAddress.sin_addr));
+    strcpy(sock, ipaddr);
     strcat(sock, ":");
     strcat(sock, port_str);
 
@@ -207,7 +221,7 @@ char* get_next_server(zhandle_t* handler, char* rootpath, char* node, watcher_fn
         /**
          * A ideia aqui é procurar o nó com o identificador
          * imediatamente a seguir do nó atual, ou seja, o nó
-         * com identificador maior que o atual mas menor do 
+         * com identificador maior do que o atual mas menor do 
          * que todos os outros nós.
          * 
          * Exemplo:
@@ -301,8 +315,8 @@ char* get_prev_server(zhandle_t* handler, char* rootpath, char* node, watcher_fn
 
         /**
          * A ideia aqui é procurar o nó com o identificador
-         * imediatamente a seguir do nó atual, ou seja, o nó
-         * com identificador maior que o atual mas menor do 
+         * imediatamente antes do nó atual, ou seja, o nó
+         * com identificador menor do que o atual mas maior do 
          * que todos os outros nós.
          * 
          * Exemplo:
@@ -343,7 +357,7 @@ char* get_prev_server(zhandle_t* handler, char* rootpath, char* node, watcher_fn
     // Se nada encontrou
     if (next_node == NULL) {
         free(node_list);
-        return NULL;
+        return ZDATA_NOT_FOUND;
     }
 
     // Alocar buffer para obter o conteudo do no
