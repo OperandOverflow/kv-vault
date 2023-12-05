@@ -8,11 +8,16 @@
 - Sincronizar a tabela com o servidor anterior (done)
 
 ### `replica_client_table`
-- Definir estrutura `c_rptable_t`
-- Definir funcoes que a inicializam e manipulam
+- Definir estrutura `c_rptable_t` (done)
+- Definir funcoes que a inicializam e manipulam (done)
+- rptable_stats retornar estatisticas dos 2 servidores
 
 ### `table_client`
-- Usar o modulo `replica_client_table`
+- Usar o modulo `replica_client_table` (done)
+- Testes
+
+## `table_server`
+- Arranjar 2 servidores ir abaixo quando um vai abaixo
 
 ### `README`
 - Completar a documentacao
