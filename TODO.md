@@ -2,6 +2,7 @@
 
 ### `zk_adaptor`
 - Obter o ip da maquina local (done)
+- Adaptar ao `ZDATA_NOT_FOUND` 
 
 ### `replica_server_table`
 - Sincronizar a tabela com o servidor anterior (done)
