@@ -36,7 +36,71 @@ s_rptable_t *rptable_connect(int sock, node_watcher watcher, failure_handler han
 
     // Iniciar o ZooKeeper
     if ((table.handler = zookeeper_init(RPTABLE_ZK_DEFAULT_SOCKET, 
-                    zkconnection_watcher, 2000, 0, NULL, 0)) == NULL)
+                    zkconnection_watcher, RPTABLE_ZK_DEFAULT_TIMEOUT, 0, NULL, 0)) == NULL)
+        goto err_zk_init;
+
+    // Definir o prefixo do no
+    set_server_prefix(RPTABLE_ZK_NODE_PREFIX);
+    
+    // Criar o no raiz
+    if (create_root(table.handler, RPTABLE_ZK_ROOT_PATH) < 0)
+        goto err_zk_create_root;
+
+    // Criar um no efemero no zk
+    if ((table.znode = register_server(table.handler, 
+                    RPTABLE_ZK_ROOT_PATH, sock)) == NULL)
+        goto err_zk_reg_server;
+    
+    // Colocar watcher ao no raiz
+    set_node_watcher(table.handler, RPTABLE_ZK_ROOT_PATH, zknode_watcher);
+
+    // Obter o socket do servidor seguinte
+    table.rptable_socket = get_next_server(table.handler, 
+                    RPTABLE_ZK_ROOT_PATH, table.znode, zknode_watcher);
+    
+    // Se ha algum servidor seguinte
+    if (table.rptable_socket != NULL) {
+        // Se ocorrer erro enquanto tentar ligar
+        if ((table.rtable = rtable_connect(table.rptable_socket)) == NULL)
+            goto err_rtable_con;
+    }
+
+    // Copiar para o buffer
+    memcpy(table_ptr, &table, sizeof(s_rptable_t));
+
+    // Guardar as funcoes para fazer call-back
+    rptable_watcher = watcher;
+    rptable_fhandler = handler;
+
+    return table_ptr;
+
+    err_rtable_con:
+    free(table.rptable_socket);
+    err_zk_reg_server:
+    zookeeper_close(table.handler);
+    err_zk_create_root:
+    err_zk_init:
+    free(table_ptr);
+    err_rptable_malloc:
+    return NULL;
+}
+
+s_rptable_t *rptable_connect_zksock(char* zksock, int sock, node_watcher watcher, failure_handler handler) {
+    if (sock < 0 || watcher == NULL || handler == NULL)
+        return NULL;
+
+    s_rptable_t *table_ptr = malloc(sizeof(s_rptable_t));
+    if (table_ptr == NULL)
+        goto err_rptable_malloc;
+
+    // Iniciar a estrutura
+    s_rptable_t table = {NULL, NULL, NULL, NULL};
+
+    zoo_set_debug_level(ZOO_LOG_LEVEL_ERROR);
+
+    // Iniciar o ZooKeeper
+    if ((table.handler = zookeeper_init(zksock, 
+                    zkconnection_watcher, RPTABLE_ZK_DEFAULT_TIMEOUT, 0, NULL, 0)) == NULL)
         goto err_zk_init;
 
     // Definir o prefixo do no
@@ -220,7 +284,7 @@ void zknode_watcher(zhandle_t *zzh, int type, int state, const char *path, void*
         table->rtable == NULL)
         return;
     
-    // Se nao esta ligado a nenhum servidor e o novo nao e' NULL (apareceu um novo)
+    // Se nao esta ligado a nenhum servidor e o novo não é NULL (apareceu um novo)
     if (table->rptable_socket == NULL && table->rtable == NULL) {
         table->rptable_socket = next_table;
         // Se nao conseguir ligar ao novo servidor
@@ -229,7 +293,7 @@ void zknode_watcher(zhandle_t *zzh, int type, int state, const char *path, void*
         return;
     }
 
-    // Se esta ligado a um servidor e o novo e' NULL (o atual foi abaixo)
+    // Se esta ligado a um servidor e o novo é NULL (o atual foi abaixo)
     if (next_table == NULL && 
         table->rptable_socket != NULL && 
         table->rtable != NULL) {
@@ -239,6 +303,10 @@ void zknode_watcher(zhandle_t *zzh, int type, int state, const char *path, void*
         table->rptable_socket = NULL;
         return;
     }
+
+    // Se o servidor ligado atualmente é igual ao novo
+    if (strcmp(next_table, table->rptable_socket) == 0 && table->rtable != NULL)
+        return;
 
     rptable_fhandler(RPTABLE_INVALID_ARG);
     return;

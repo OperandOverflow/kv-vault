@@ -60,7 +60,7 @@ void network_server_print(char* ip, int port, const char *msg, ...) {
     if (id == mainthread)
         printf("%s - main: ", timeString);
     else 
-        printf("%s - \033[4;36m%s\033[0m-\033[4;32m%d\033[0m: ", timeString, ip, port);
+        printf("%s - \033[4;36m%s\033[0m-\033[4;32m%hu\033[0m: ", timeString, ip, port);
 
     va_list args;
     va_start(args, msg);
@@ -139,7 +139,7 @@ void *thread_loop(void *arg) {
     char ip[20];
     if (res >= 0)
         strcpy(ip, inet_ntoa(clientaddr.sin_addr));
-    short port = ntohs(clientaddr.sin_port);
+    unsigned  port = ntohs(clientaddr.sin_port);
     network_server_print(ip, port, "Client connection estabilished!\n");
 
     // Recebe pedidos do cliente usando a função network_receive
@@ -183,7 +183,7 @@ int network_main_loop(int listening_socket, struct table_t *table, s_rptable_t *
     // O loop principal continua a aceitar conexões de clientes
     while ((connsockfd = accept(listening_socket, (struct sockaddr *)&client, &size_client)) != -1) {
         char *ip = inet_ntoa(client.sin_addr);
-        network_server_print(NULL, 0, "Client connecting from ip \033[4;36m%s\033[0m, port \033[4;32m%d\033[0m\n", ip, client.sin_port);
+        network_server_print(NULL, 0, "Client connecting from ip \033[4;36m%s\033[0m, port \033[4;32m%hu\033[0m\n", ip, htons(client.sin_port));
 
         in_port_t *sock = malloc(sizeof(in_port_t));
         if (sock == NULL) {

@@ -43,9 +43,9 @@ void table_fhandler(int errcode) {
 }
 
 int main(int argc, char ** argv) {
-    if (argc != 3) {
+    if (argc != 3 && argc != 4) {
         printf("Wrong number of arguments!\n");
-        printf("Usage: <port> <table size>\n");
+        printf("Usage: <port> <table size> [<zookeeper ip>:<zookeeper port>]\n");
         return -1;
     }
  
@@ -81,7 +81,12 @@ int main(int argc, char ** argv) {
     }
 
     // Inicializar a tabela replicada
-    if ((repl_table = rptable_connect(sockt, table_watcher, table_fhandler)) == NULL) {
+    if (argc == 3)
+        repl_table = rptable_connect(sockt, table_watcher, table_fhandler);
+    else 
+        repl_table = rptable_connect_zksock(argv[3], sockt, table_watcher, table_fhandler);
+    
+    if (repl_table == NULL) {
         perror("Error while initializing replicated table!\n");
         table_skel_destroy(table);
         network_server_close(sockt);
@@ -90,6 +95,7 @@ int main(int argc, char ** argv) {
 
     // Atender clientes (so nos dias uteis, das 9h ate as 16h)
     network_main_loop(sockt, table, repl_table);
+    rptable_disconnect(repl_table);
     network_server_close(sockt);
     table_skel_destroy(table);
     return 0;

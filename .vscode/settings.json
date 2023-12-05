@@ -5,7 +5,8 @@
         "pthread.h": "c",
         "zookeeper.h": "c",
         "zk_adaptor.h": "c",
-        "data.h": "c",
-        "table.h": "c"
+        "replica_table.h": "c",
+        "if_link.h": "c",
+        "netdb.h": "c"
     }
 }

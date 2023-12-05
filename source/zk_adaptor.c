@@ -8,16 +8,56 @@
 
 #include "zk_adaptor.h"
 
+#include <netdb.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ifaddrs.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include <netinet/in.h>
 #include <sys/socket.h>
+#include <linux/if_link.h>
 #include <zookeeper/zookeeper.h>
 
 char *server_name_prefix = NULL;
+
+char *get_ip_address() {
+    /**
+     * \todo
+    */
+    struct ifaddrs *ifaddr;
+    int family, s;
+    char host[1025];
+
+    if (getifaddrs(&ifaddr) == -1)
+        return NULL;
+
+    for (struct ifaddrs *ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+        if (ifa->ifa_addr == NULL)
+            continue;
+
+        family = ifa->ifa_addr->sa_family;
+
+        // Se a familia for de IPv4
+        if (family == AF_INET) {
+            s = getnameinfo(ifa->ifa_addr,
+                    (family == AF_INET) ? sizeof(struct sockaddr_in) :
+                                            sizeof(struct sockaddr_in6),
+                    host, 1025,
+                    NULL, 0, 1);
+            if (s != 0) {
+                printf("getnameinfo() failed: %s\n", gai_strerror(s));
+                return NULL;
+            }
+
+            printf("\t\taddress: <%s>\n", host);
+
+        }
+    }
+
+    freeifaddrs(ifaddr);
+    return NULL;
+}
 
 int set_node_watcher(zhandle_t* handler, char* node, watcher_fn watcher) {
     if (handler == NULL || node == NULL || watcher == NULL)
@@ -131,11 +171,6 @@ char* register_server(zhandle_t* handler, char* path, int socket) {
     return node_name;
 }
 
-// Procura o no imediatamente com o identificador maior
-/**
- * \todo
- * Procurar o no com identificador seguinte em vez de 
-*/
 char* get_next_server(zhandle_t* handler, char* rootpath, char* node, watcher_fn watcher) {
     if (handler == NULL || rootpath == NULL || node == NULL)
         return NULL;
@@ -169,16 +204,45 @@ char* get_next_server(zhandle_t* handler, char* rootpath, char* node, watcher_fn
         // Concatenar o nome do no ao diretorio raiz
         strcat(node_fullpath, node_list->data[i]);
 
+        /**
+         * A ideia aqui é procurar o nó com o identificador
+         * imediatamente a seguir do nó atual, ou seja, o nó
+         * com identificador maior que o atual mas menor do 
+         * que todos os outros nós.
+         * 
+         * Exemplo:
+         * Sendo o nó atual é server001 e se aplicar esta 
+         * função aos nós:
+         *   server001, server004, server002, server003;
+         * o resultado retornado devia ser server002 em
+         * vez de server004.
+        */
+
         // Se o novo e igual ou menor do que o atual
         // strcmp("002", "001") = 1
+        // strcmp("001", "002") = -1
         if (strcmp(node_fullpath, node) <= 0) {
             free(node_fullpath);
             continue;
         }
 
-        // Salva-guardar o indice do no seguinte
-        next_node = node_fullpath;
-        break;
+        // Cond: node_fullpath tem identificador maior
+        
+        // Se ainda nao ha nenhum no candidato
+        if (next_node == NULL) {
+            next_node = node_fullpath;
+            continue;
+        }
+
+        // Se o node_fullpath e menor do que o no guardado
+        if (strcmp(node_fullpath, next_node) <= 0) {
+            // Substitui o guardado
+            free(next_node);
+            next_node = node_fullpath;
+            continue;
+        }
+
+        free(node_fullpath);        
     }
     
     // Se nada encontrou

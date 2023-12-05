@@ -21,8 +21,12 @@ struct rtable_t *rtable_connect(char *address_port) {
     if (address_port == NULL)
         return NULL;
     
+    // Fazer uma copia da string
+    char address_dup[strlen(address_port) + 1];
+    strcpy(address_dup, address_port);
+    
     // Separar string em ip e porto
-    char *ip = strtok(address_port, ":");
+    char *ip = strtok(address_dup, ":");
     char *port = strtok(NULL, ":");
     if (ip == NULL || port == NULL)
         return NULL;
@@ -31,8 +35,16 @@ struct rtable_t *rtable_connect(char *address_port) {
     struct rtable_t *table = malloc(sizeof(struct rtable_t));
     if (table == NULL)
         return NULL;
+    
+    // Duplicar a string ip
+    char *ip_dup = malloc((strlen(ip) + 1) * sizeof(char));
+    if (ip_dup == NULL) {
+        free(table);
+        return NULL;
+    }
+    strcpy(ip_dup, ip);
 
-    table->server_address = ip;
+    table->server_address = ip_dup;
     table->server_port = atoi(port);
 
     // Estabelecer a ligacao
@@ -46,6 +58,7 @@ struct rtable_t *rtable_connect(char *address_port) {
 
 int rtable_disconnect(struct rtable_t *rtable) {
     int result = network_close(rtable);
+    free(rtable->server_address);
     free(rtable);
     return result;
 }

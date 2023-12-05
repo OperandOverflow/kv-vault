@@ -49,7 +49,8 @@ typedef s_rptable_t *(*node_watcher)();
 // =========================================================
 
 /**
- * Estabelece ligacao a tabela replicada.
+ * Estabelece ligacao a tabela replicada, usando o socket
+ * do ZooKeeper de omissao.
  * \param sock
  *      Descritor do socket do servidor.
  * \param watcher
@@ -61,6 +62,23 @@ typedef s_rptable_t *(*node_watcher)();
  *      Apontador a s_rptable_t ou NULL em caso de erro.
 */
 s_rptable_t *rptable_connect(int sock, node_watcher watcher, failure_handler handler);
+
+/**
+ * Estabelece ligacao a tabela replicada, especificando o 
+ * socket do servidor ZooKeeper.
+ * \param zksock
+ *      String que descreve o socket do servidor ZooKeeper.
+ * \param sock
+ *      Descritor do socket do servidor.
+ * \param watcher
+ *      Funcao que escuta dos eventos 
+ * \param handler
+ *      Funcao que faz o tratamento da falha da 
+ *      tabela replicada.
+ * \return
+ *      Apontador a s_rptable_t ou NULL em caso de erro.
+*/
+s_rptable_t *rptable_connect_zksock(char* zksock, int sock, node_watcher watcher, failure_handler handler);
 
 /**
  * Desliga a ligacao com a tabela replicada.

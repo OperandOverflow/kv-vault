@@ -40,6 +40,7 @@ typedef void (*failure_handler)(int errcode);
 #define RPTABLE_ZK_DEFAULT_SOCKET "127.0.0.1:2181"
 #define RPTABLE_ZK_ROOT_PATH "/chain"
 #define RPTABLE_ZK_NODE_PREFIX "server"
+#define RPTABLE_ZK_DEFAULT_TIMEOUT 2000
 
 enum RPTABLE_ERROR {
     ZKCONNECTION_LOST           = -1,
