@@ -22,5 +22,8 @@
 ### `README`
 - Completar a documentacao
 
+### Corrigir erros
+- Para o input `put æßð€łŧ€§££@ł adeus` dá erro de segmentação no cliente e nos servidores
+
 ### Opcional
 - Interface

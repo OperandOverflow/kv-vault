@@ -321,7 +321,8 @@ void zknode_watcher(zhandle_t *zzh, int type, int state, const char *path, void*
                                 zknode_watcher);
 
     // Se nao foi encontrado algum dos servidores
-    if (next_headtable == NULL || next_tailtable == NULL) {
+    if (next_headtable == NULL || next_headtable == ZDATA_NOT_FOUND || 
+        next_tailtable == NULL || next_tailtable == ZDATA_NOT_FOUND) {
         rptable_fhandler(RPTABLE_CONNECTION_FAILED);
         return;
     }

@@ -386,6 +386,16 @@ void zknode_watcher(zhandle_t *zzh, int type, int state, const char *path, void*
     // Se o servidor ligado atualmente é igual ao novo
     if (strcmp(next_table, table->rptable_socket) == 0 && table->rtable != NULL)
         return;
+    else {
+        rtable_disconnect(table->rtable);
+        free(table->rptable_socket);
+        if ((table->rtable = rtable_connect(next_table)) == NULL) {
+            free(next_table);
+            rptable_fhandler(RPTABLE_CONNECTION_FAILED);
+        }
+        table->rptable_socket = next_table;
+        return;
+    }
 
     rptable_fhandler(RPTABLE_INVALID_ARG);
     return;
