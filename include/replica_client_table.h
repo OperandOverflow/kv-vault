@@ -118,7 +118,7 @@ struct data_t *rptable_get(c_rptable_t *rptable, char *key);
 
 /**
  * Função para remover um elemento da tabela. Vai libertar 
- * toda a memoria alocada na respetiva operação rtable_put().
+ * toda a memoria alocada na respetiva operação rptable_put().
  * \param rptable
  *      Apontador a estrutura c_rptable_t.
  * \param key
@@ -176,7 +176,7 @@ void rptable_free_keys(char **keys);
 struct entry_t **rptable_get_table(c_rptable_t *rptable);
 
 /**
- * Liberta a memória alocada por rtable_get_table().
+ * Liberta a memória alocada por rptable_get_table().
  * \param entries
  *      Array de entry_t*.
 */

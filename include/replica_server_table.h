@@ -100,36 +100,93 @@ int rptable_disconnect(s_rptable_t *rptable);
  * Função para adicionar um elemento na tabela.
  * Se a key já existe, vai substituir essa entrada pelos novos dados.
  * \param rptable
+ *      Apontador a estrutura s_rptable_t.
  * \param key
+ *      Chave associada a entrada.
  * \param data
+ *      Conteudo para ser colocado na entrada.
  * \return
  *      0 (OK) ou -1 em caso de erro.
  */
 int rptable_put(s_rptable_t *rptable, char *key, struct data_t *value);
 
-/* Retorna o elemento da tabela com chave key, ou NULL caso não exista
+/** 
+ * Retorna o elemento da tabela com chave key, ou NULL caso não exista
  * ou se ocorrer algum erro.
+ * \param rptable
+ *      Apontador a estrutura s_rptable_t.
+ * \param key
+ *      Chave associada a entrada.
+ * \return
+ *      Estrutura data_t que contem o conteudo da entrada ou NULL
+ *      caso nao exista ou se ocorreu algum erro.
  */
 struct data_t *rptable_get(s_rptable_t *rptable, char *key);
 
-/* Função para remover um elemento da tabela. Vai libertar 
- * toda a memoria alocada na respetiva operação rtable_put().
- * Retorna 0 (OK), ou -1 (chave não encontrada ou erro).
+/**
+ * Função para remover um elemento da tabela. Vai libertar 
+ * toda a memoria alocada na respetiva operação rptable_put().
+ * \param rptable
+ *      Apontador a estrutura c_rptable_t.
+ * \param key
+ *      Chave da entrada para ser removida.
+ * \return 
+ *      0 (OK) ou -1 em caso de erro.
  */
 int rptable_del(s_rptable_t *rptable, char *key);
 
-/* Retorna o número de elementos contidos na tabela ou -1 em caso de erro.
+/**
+ *  Retorna o número de elementos contidos na tabela ou -1 em caso de erro.
+ * \param rptable
+ *      Apontador a estrutura s_rptable_t.
+ * \return
+ *      Numero de elementos na tabela ou -1 em caso de erro.
  */
 int rptable_size(s_rptable_t *rptable);
 
+/** 
+ * Retorna uma estrutura statistics_t que contem informacoes estatisticas
+ * sobre o servidor seguinte.
+ * \param rptable
+ *      Apontador a estrutura s_rptable_t.
+ * \return
+ *      Estrutura statistics_t que contem as informacoes estatisticas
+ *      da tabela remota ou NULL em caso de erro.
+ */
 struct statistics_t *rptable_stats(s_rptable_t *rptable);
 
+/**
+ * Retorna um array de char* com a cópia de todas as keys da tabela,
+ * colocando um último elemento do array a NULL.
+ * \param rptable
+ *      Apontador a estrutura s_rptable_t.
+ * \return
+ *      Array de keys ou NULL em caso de erro.
+ */
 char **rptable_get_keys(s_rptable_t *rptable);
 
+/**
+ * Liberta a memória alocada por rptable_get_keys().
+ * \param keys
+ *      Array de keys.
+*/
 void rptable_free_keys(char **keys);
 
+/**
+ * Retorna um array de entry_t* com todo o conteúdo da tabela, colocando
+ * um último elemento do array a NULL.
+ * \param rptable
+ *      Apontador a estrutura s_rptable_t.
+ * \return
+ *      Array de entry_t* ou NULL em caso de erro.
+*/
 struct entry_t **rptable_get_table(s_rptable_t *rptable);
 
+/**
+ * Liberta a memória alocada por rptable_get_table().
+ * \param entries
+ *      Array de entry_t*.
+*/
 void rptable_free_entries(struct entry_t **entries);
 
 

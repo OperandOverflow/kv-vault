@@ -58,7 +58,7 @@ Durante o desenvolvimento, foi identificado a necessidade de criar módulos espe
 ### Limitações da implementação
 - O desenvolvimento desta fase do projeto usa os ficheiros ``.o`` fornecidos pelos docentes.
 
-- **Foi encontrado fugas de memória na biblioteca do ZooKeeper e a quantidade de memória perdida aumenta com o número de pesquisas no ZooKeeper**, este problema já foi reportado no fórum no ZooKeeper no entanto ainda não é resolvido. Para mais detalhes, veja [aqui](https://issues.apache.org/jira/browse/ZOOKEEPER-4020)
+- **Foi encontrado fugas de memória na biblioteca do ZooKeeper e a quantidade de memória perdida aumenta com o número de pesquisas no ZooKeeper**, este problema já foi reportado no fórum do ZooKeeper no entanto ainda não é resolvido. Para mais detalhes, veja [aqui](https://issues.apache.org/jira/browse/ZOOKEEPER-4020).
 
 - **Esta implementação do projeto não garante a libertação de todos os recursos à saída da execução em casos de interrupção**, quando o servidor recebe o sinal ``SIGINT``, é indeterminado o estado da execução tanto na thread principal, como nas segundárias, por isso não garante a libertação de todos os recursos alocados.
 
