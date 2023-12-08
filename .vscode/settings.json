@@ -10,6 +10,7 @@
         "netdb.h": "c",
         "table-private.h": "c",
         "table.h": "c",
-        "client_stub-private.h": "c"
+        "client_stub-private.h": "c",
+        "replica_server_table.h": "c"
     }
 }

@@ -23,7 +23,7 @@ typedef struct statistics_t {
     long time_lasted;   /* tempo total demorou nas operacoes */
     int n_client;       /* n clientes conectados */
     // Controlo da concorrencia
-    rwcctrl_t *cctrl;   /*  */
+    rwcctrl_t *cctrl;   /* controlo de concorrencia de leitura e escrita */
 } stats_t;
 
 // =========================================================
@@ -113,6 +113,19 @@ int stats_dec_client(stats_t *stats);
  *      0 (OK) ou -1 em caso de erro.
 */
 int stats_op_finish(stats_t *stats, long time);
+
+/**
+ * Duplica a estrutura e o seu conteúdo, fazendo
+ * uma cópia profunda do objeto.
+ * \attention
+ *      Thread-safe
+ * \param stats
+ *      Estrutura para ser duplicada.
+ * \return
+ *      Apontador a nova estrutura ou NULL em caso 
+ *      de erro.
+*/
+stats_t *stats_dup(stats_t *stats);
 
 /**
  * Destroi a estrutura, libertando todos os recursos.

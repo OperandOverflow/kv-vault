@@ -110,6 +110,18 @@ int stats_op_finish(stats_t *stats, long time) {
     return 0;
 }
 
+stats_t *stats_dup(stats_t *stats) {
+    if (stats == NULL || stats->cctrl == NULL)
+        return NULL;
+    stats_t *new_stats = NULL;
+    read_begin(stats->cctrl);
+    new_stats = stats_init_args(stats->n_op, stats->time_lasted, stats->n_client);
+    read_end(stats->cctrl);
+    if (new_stats == NULL)
+        return NULL;
+    return new_stats;
+}
+
 int stats_destroy(stats_t *stats) {
     if (stats == NULL || stats->cctrl == NULL)
         return -1;
