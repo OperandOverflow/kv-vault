@@ -42,6 +42,21 @@ typedef struct String_vector zoo_string;
 */
 int set_node_watcher(zhandle_t* handler, char* node, watcher_fn watcher);
 
+/**
+ * Verifica se os dados passados existem em algum no.
+ * \param handler
+ *      ZooKeeper handler.
+ * \param rootpath
+ *      Diretorio que contem os nos.
+ * \param data
+ *      Os dados para procurar no ZK.
+ * \param watcher
+ * \return
+ *      0 não encontrou, 1 encontrou pelo menos um nó com
+ *      os dados ou -1 em caso de erro.
+*/
+int data_exists(zhandle_t *handler, char* rootpath, char* data);
+
 // =========================================================
 //                  Operacoes do servidor
 // =========================================================

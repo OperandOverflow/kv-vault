@@ -74,6 +74,71 @@ int set_node_watcher(zhandle_t* handler, char* node, watcher_fn watcher) {
     return -1;
 }
 
+int data_exists(zhandle_t *handler, char* rootpath, char* data) {
+    if (handler == NULL || data == NULL)
+        return -1;
+    
+    // Alocar memoria para o buffer
+    zoo_string* node_list = malloc(sizeof(zoo_string));
+    if (node_list == NULL)
+        return -1;
+    
+    // Obter a lista de nos
+    if (ZOK != zoo_get_children(handler, rootpath, 0, node_list)) {
+        free(node_list);
+        return -1;
+    }
+
+    // Iterar pela lista de nos
+    for (size_t i = 0; i < node_list->count; i++) {
+        // Alocar espaco para o caminho completo do no
+        char* node_fullpath = malloc(strlen(rootpath) + strlen(node_list->data[i]) + 2);
+        if (node_fullpath == NULL) { 
+            free(node_list);
+            return -1;
+        }
+        strcpy(node_fullpath, rootpath);
+
+        // Verificar se tem / no fim do diretorio
+        if (node_fullpath[strlen(rootpath) - 1] != '/')
+            strcat(node_fullpath, "/");
+        
+        // Concatenar o nome do no ao diretorio raiz
+        strcat(node_fullpath, node_list->data[i]);
+
+        // Alocar buffer para obter o conteudo do no
+        char* zdata_buf = malloc(ZDATALEN * sizeof(char));
+        if (zdata_buf == NULL) {
+            free(node_fullpath);
+            free(node_list);
+            return -1;
+        }
+
+        // Obter o conteudo do no
+        int zdata_len = ZDATALEN * sizeof(char);
+        if (ZOK != zoo_get(handler, node_fullpath, 0, zdata_buf, &zdata_len, NULL)){
+            free(zdata_buf);
+            free(node_fullpath);
+            free(node_list);
+            return -1;
+        }
+
+        // Comparar se sao iguais
+        if (strcmp(zdata_buf, data) == 0) {
+            free(zdata_buf);
+            free(node_fullpath);
+            free(node_list);
+            return 1;
+        }
+
+        free(zdata_buf);
+        free(node_fullpath);
+    }
+
+    free(node_list);
+    return 0;
+}
+
 int set_server_prefix(char* nameprefix) {
     if (server_name_prefix != NULL)
         free(server_name_prefix);
