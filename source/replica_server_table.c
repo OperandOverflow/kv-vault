@@ -356,7 +356,7 @@ void zknode_watcher(zhandle_t *zzh, int type, int state, const char *path, void*
 
     // Se nao foi encontrado nenhum servidor seguinte 
     // e o atual nao existe
-    if ((next_table == NULL) && 
+    if (next_table == NULL && 
         table->rptable_socket == NULL &&
         table->rtable == NULL)
         return;
@@ -373,7 +373,7 @@ void zknode_watcher(zhandle_t *zzh, int type, int state, const char *path, void*
     }
 
     // Se esta ligado a um servidor e o novo é NULL (o atual foi abaixo)
-    if ((next_table == NULL) && 
+    if (next_table == NULL && 
         table->rptable_socket != NULL && 
         table->rtable != NULL) {
         rtable_disconnect(table->rtable);
@@ -384,9 +384,10 @@ void zknode_watcher(zhandle_t *zzh, int type, int state, const char *path, void*
     }
 
     // Se o servidor ligado atualmente é igual ao novo
-    if (strcmp(next_table, table->rptable_socket) == 0 && table->rtable != NULL)
+    if (strcmp(next_table, table->rptable_socket) == 0 && table->rtable != NULL) {
+        free(next_table);
         return;
-    else {
+    } else {
         rtable_disconnect(table->rtable);
         free(table->rptable_socket);
         if ((table->rtable = rtable_connect(next_table)) == NULL) {
@@ -397,6 +398,7 @@ void zknode_watcher(zhandle_t *zzh, int type, int state, const char *path, void*
         return;
     }
 
+    free(next_table);
     rptable_fhandler(RPTABLE_INVALID_ARG);
     return;
 }
