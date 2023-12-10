@@ -493,11 +493,19 @@ int invoke_stats(MessageT *msg, struct table_t *table) {
     StatsT *statis = malloc(sizeof(StatsT));
     if (statis == NULL)
         return invoke_error(msg);
+    // Duplicar a estatistica: fazer um snapshot
+    stats_t *stats_cpy = stats_dup(stats);
+    if (stats_cpy == NULL) {
+        free(statis);
+        return invoke_error(msg);
+    }
     
     stats_t__init(statis);
-    statis->n_clients = stats_get_n_client(stats);
-    statis->n_op = stats_get_n_op(stats);
-    statis->time = stats_get_time_lasted(stats);
+    statis->n_clients = stats_get_n_client(stats_cpy);
+    statis->n_op = stats_get_n_op(stats_cpy);
+    statis->time = stats_get_time_lasted(stats_cpy);
+
+    stats_destroy(stats_cpy);
 
     msg->stats = statis;
     msg->opcode = MESSAGE_T__OPCODE__OP_STATS + 1;
