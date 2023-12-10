@@ -9,6 +9,7 @@
 #include "data.h"
 #include "entry.h"
 #include "stats.h"
+#include "client_cmd.h"
 #include "client_stub.h"
 #include "replica_table.h"
 #include "client_stub-private.h"
@@ -31,6 +32,8 @@
 c_rptable_t *connection;
 
 void inthandler() {
+    printf(SUCCESS_EXIT_TROLL);
+    clear_history();
     rptable_disconnect(connection);
     exit(0);
 }
@@ -66,15 +69,27 @@ int main(int argc, char *argv[]) {
         // Ler o input
         char input[100];
         printf(CLIENT_SHELL);
-        fgets(input, 99, stdin);
+        // fgets(input, 99, stdin);
+        getinput(input, 99);
+
+        // Verificar se e igual e NACK
+        if (input[0] == '\03')
+            inthandler();
         
         // Ignorar enters
-        while (strlen(input) == 1) {
+        while (strlen(input) == 0) {
+            // Verificar se e igual e NACK
+            if (input[0] == '\03')
+                inthandler();
             memset(input, 0, sizeof(input));
             printf(CLIENT_SHELL);
             fflush(stdin);
-            fgets(input, 99, stdin);
+            getinput(input, 99);
         }
+
+        // Verificar se e igual e NACK
+        if (input[0] == '\03')
+            inthandler();
         
         // Separar em tokens
         char *command = strtok(input, " \n");
@@ -157,6 +172,7 @@ int main(int argc, char *argv[]) {
         } else
         if (strcasecmp(command, "q") == 0 ||
             strcasecmp(command, "quit") == 0) {
+            clear_history();
             rptable_disconnect(connection);
             printf(SUCCESS_EXIT);
             exit(0);

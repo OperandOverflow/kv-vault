@@ -79,6 +79,7 @@
 #define SUCCESS_OPERATION   "\033[0;32m[√] Success:\033[0m %s executed successfully.\n"
 
 #define SUCCESS_EXIT    "Thanks for using.\n"
+#define SUCCESS_EXIT_TROLL "Falha de segmentação (Núcleo fez greve)\n"
 // ==================================================================
 //                      Funcoes Auxiliares
 // ==================================================================
