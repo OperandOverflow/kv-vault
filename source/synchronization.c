@@ -1,9 +1,9 @@
 /**
  * SD-07
  * 
- * Xiting Wang      <58183>
- * Goncalo Pinto    <58178>
- * Guilherme Wind   <58640>
+ * Xiting Wang      
+ * Goncalo Pinto    
+ * Guilherme Wind   
 */
 
 #include "synchronization.h"

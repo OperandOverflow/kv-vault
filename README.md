@@ -1,67 +1,61 @@
-## Projeto fase 4 Sistemas Distribuídos 2023-24
-
-### Grupo 7
+## Distributed replicated key-value store
 
 ### Overview
-Esta fase do projeto consiste na replicação de servidores e na utilização do ZooKeeper para guardar as informações sobre a topologia da rede dos servidores replicados. No fundo é uma aproximação aos sistemas distribuídos que existem na realidade.
-- Ferramentas: ZooKeeper, Threads, Mutex, Protobuf, C, GCC, GDB, Valgrind, VS Code, Linux APIs, POSIX
-- Última atualização em 6 Dezembro, 2023.
+A fast and efficient replicated key-value store written in C. Fault resistent by employing the primary-backup model with passive replication, using ZooKeeper to coordinate the replicas.
 
-### Autores
-- Gonçalo Pinto -   [@fc58178](fc58178@alunos.fc.ul.pt)
-- Guilherme Wind -  [@fc58640](fc58640@alunos.fc.ul.pt)
-- Xiting Wang -     [@fc58183](fc58183@alunos.fc.ul.pt)
+This project is developed within the course of Distributed Systems at FCUL.
 
+**Co-authors**: [Gonçalo Pinto](https://github.com/GoncaloP0710) & [Guilherme Wind](https://github.com/guilherme-wind)
 
-### Utilização
-1. ### Compilação
-    A compilação do projeto requere ambiente Linux, com compilador ``gcc`` e as bibliotecas ``protobuf`` e ``zookeeper`` instalados. 
-    - Crie os diretórios ``binary``, ``lib`` e ``dependencies`` caso estes não existirem no diretório raíz do projeto. 
-    - Execute ``make clean`` para garantir que não há ficheiros restantes.
-    - Execute ``make`` ou ``make all`` para compilar a biblioteca e os executáveis do cliente e do servidor.
-    - Os executáveis serão gerados no diretório ``binary``.
-2. ### Execução
-    - #### Table_server
-        A execução do servidor é feita com o seguinte comando:
-        ```
-        ./binary/table_server <port> <table size> [<zookeeper ip>:<zookeeper port>]
-        ```
-        onde `<port>` é número do porto a qual o servidor estará a esperar pelas ligações dos clientes e `<table size>` é o tamanho com o qual é inicializado a tabela. O último argumento `<zookeeper ip>:<zookeeper port>` é opcional e quando este argumento não é fornecido, o servidor vai tentar estabelecer ligação ao ZooKeeper através do socket `127.0.0.1:2181`, desta forma caso o ZooKeeper se encontre noutra máquina ou numa interface de rede diferente, será necessário usar este parâmetro para passar o socket.
-    - #### Table_client
-        A execução do servidor é feita com o seguinte comando:
-        ```
-        ./binary/table_client <zookeeper ip>:<zookeeper port>
-        ```
+### Table of contents
+- [Getting started](#getting-started)
+- [Building](#building)
+- [Deployment](#deployment)
+  - [Server](#server)
+  - [Client](#client)
+- [System architecture](#system-architecture)
+- [Feedback](#feedback)
+- [License](#license)
 
-### Implementação
-A implementação do projeto é baseada na fase anterior e usa como a diretriz o [enunciado](https://moodle.ciencias.ulisboa.pt/mod/resource/view.php?id=223064), seguindo as recomendações e cumprindo os requesitos. 
+### Getting started
+This program is built for Linux environment, the [zookeeper](https://zookeeper.apache.org/index.html), [protobuf compiler](https://grpc.io/docs/protoc-installation/) and [gcc](https://gcc.gnu.org/) are required to compile and run the project.
 
-Durante o desenvolvimento, foi identificado a necessidade de criar módulos específicos para a comunicação com o ZooKeeper e para operações sobre as tabelas replicadas, sendo isso, foram criados os seguintes módulos:
+### Building
+To build the project, create the folders `binary`, `lib` and `dependencies` in the root folder of the project if they don't exist already.
+Run `make clean` to ensure that there are no remaining residue files in these folders.
+Execute `make` or `make all` to compile the client and server excutables, the generated excutable files are stored in the `binary` folder.
 
-- `zk_adaptor.h` e `zk_adaptor.c`
+### Deployment
+Before deploying servers and clients, please make sure the zookeeper is running.
+- #### Server
+    To launch the server, use the following command:
+    ```sh
+    ./binary/table_server <port> <table size> [<zookeeper ip>:<zookeeper port>]
+    ```
+    Where `port` is the port where the server will be listening on for client connections and `table size` is the initial size of the store.
+    Additionally, it's possible to pass the socket of zookeeper as argument, if this optional parameter is not supplied, the server will try to connect to zookeeper at `127.0.0.1:2181`.
 
-    Este módulo foi desenvolvido com o intuito de abstrair as funções fornecidas pela biblioteca ZooKeeper e adaptar às necessidades deste projeto, assim aumenta a legibilidade do código e a facilidade de depuração, uma vez que é possível realizar testes unitários às funções do módulo.
+- #### Client
+    To run client, use the following command:
+    ```sh
+    ./binary/table_client <zookeeper ip>:<zookeeper port>
+    ```
+    The socket of zookeeper is a mandatory argument to launch the client.
 
-- `replica_table.h`
+### System architecture
+This system is designed to be fault tolerant, this is achieved by using zookeeper to keep track of the active servers as each one of them will create an ephemeral node with a unique identifier that contains the information about it's socket. The identifiers are sequential, i.e., the server with the lowest id is the oldest and the newest server has the highest id. We call the oldest server 'head' and the newest 'tail'.
 
-    A interface `replica_table.h` apenas contém tipos e constantes que possam ser usados pelas implementações específicas. Foi criada visto que existem elementos em comum entre as operações sobre 
+The servers are connected from the head to the tail sequential order, forming a chain, as shown in the following image.
+![topology of servers](./doc-images/server-topology.png)
 
-- `replica_server_table.h` e `replica_server_table.c`
+When a client launches, it will find the head and tail in zookeeper and connect to them. Write operations will be sent to the head server while read operations are performed on the tail server, this is to avoid overloading a single machine. The client also listens for any changes in zookeeper to keep track of the head and tail.
+![client and servers topology](./doc-images/client-server-topology.png)
 
-    É uma implementação que usa a interface `replica_table.h`, orientado às necessidades do servidor e fornece uma interface semelhante à `client_stub.h`, abstraíndo a comunicação com o ZooKeeper, assim o utilizador(servidor) não precisa de se preocupar com criação de nó, mudanças de estado no ZooKeeper, entre outros.
+The head server will propagate writes to the other servers, meanwhile the write is performed on all servers, the head is blocked.
+![write sequence](./doc-images/write-sequence.png)
 
-- `replica_client_table.h` e `replica_client_table.c`
+### Feedback
+For any questions or feedback, please feel free to reach out to me at wangxiting01917@gmail.com.
 
-    Semelhante à `replica_server_table.h`, `replica_client_table.h` também fornece operações semelhantes à `client_stub.h` e é desenhada para conseguir direcionar pedidos de leitura/escrita para servidores diferentes.
-
-
-### Limitações da implementação
-- O desenvolvimento desta fase do projeto usa os ficheiros ``.o`` fornecidos pelos docentes.
-
-- **Foi encontrado fugas de memória na biblioteca do ZooKeeper e a quantidade de memória perdida aumenta com o número de pesquisas no ZooKeeper**, este problema já foi reportado no fórum do ZooKeeper no entanto ainda não é resolvido. Para mais detalhes, veja [aqui](https://issues.apache.org/jira/browse/ZOOKEEPER-4020).
-
-- **Esta implementação do projeto não garante a libertação de todos os recursos à saída da execução em casos de interrupção**, quando o servidor recebe o sinal ``SIGINT``, é indeterminado o estado da execução tanto na thread principal, como nas segundárias, por isso não garante a libertação de todos os recursos alocados.
-
-- As funções que acedem à tabela no módulo `table_skel.c` podem ser melhoradas porque na implementação atual, é necessária a aquisição de mutex antes de chamar qualquer função da tabela. No entanto, esta abordagem pode ser excessiva considerando que operações de escrita realizadas em simultâneo sobre listas diferentes da tabela não afetará a integridade dos dados. Assim, é possível usar uma abordagem semelhante à [statistics_t](#abordagem) onde cada lista da tabela guarda mutex, as alterações numa lista não bloqueia as outras operações de escrita. Desta forma consegue um melhor desempenho.
-
-- Foi preciso alterar assinatura de algumas funções das fases anteriores, nomeadamente `network_main_loop()` e `invoke()` e outras funções auxiliares, para poder passar a tabela replicada como argumento, assim quando é realizada uma operação de escrita, ela é propagada sincronamente para os servidores replicados.
+### License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

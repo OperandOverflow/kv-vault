@@ -1,9 +1,9 @@
 /**
  * SD-07
  * 
- * Xiting Wang      <58183>
- * Goncalo Pinto    <58178>
- * Guilherme Wind   <58640>
+ * Xiting Wang      
+ * Goncalo Pinto    
+ * Guilherme Wind   
 */
 
 #ifndef _TABLE_CLIENT_PRIVATE_H
@@ -68,7 +68,7 @@
 
 #define ERROR_SIZE  "\033[0;31m[!] Error:\033[0m Failed to obtain the size of the table.\n"
 
-#define ERROR_STATS  "\033[0;31m[!] Error:\033[0m Failed to obtain the statisticas of the server.\n"
+#define ERROR_STATS  "\033[0;31m[!] Error:\033[0m Failed to obtain the statistics of the server.\n"
 
 #define ERROR_GETKEYS "\033[0;31m[!] Error:\033[0m Failed to retrieve keys.\n"
 
@@ -79,7 +79,7 @@
 #define SUCCESS_OPERATION   "\033[0;32m[√] Success:\033[0m %s executed successfully.\n"
 
 #define SUCCESS_EXIT    "Thanks for using.\n"
-#define SUCCESS_EXIT_TROLL "Falha de segmentação (Núcleo fez greve)\n"
+#define SUCCESS_EXIT_TROLL "Segmentation fault (core gave up)\n"
 // ==================================================================
 //                      Funcoes Auxiliares
 // ==================================================================
