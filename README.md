@@ -30,10 +30,10 @@ Before deploying servers and clients, please make sure the zookeeper is running.
 - #### Server
     To launch the server, use the following command:
     ```sh
-    ./binary/table_server <port> <table size> [<zookeeper ip>:<zookeeper port>]
+    ./binary/table_server <port> <table size> <zookeeper ip>:<zookeeper port>
     ```
     Where `port` is the port where the server will be listening on for client connections and `table size` is the initial size of the store.
-    Additionally, it's possible to pass the socket of zookeeper as argument, if this optional parameter is not supplied, the server will try to connect to zookeeper at `127.0.0.1:2181`.
+    Optionally, it's possible to pass the socket of zookeeper as argument, if this parameter is not supplied, the server will try to connect to zookeeper at `127.0.0.1:2181`.
 
 - #### Client
     To run client, use the following command:
