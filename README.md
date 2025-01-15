@@ -46,12 +46,15 @@ Before deploying servers and clients, please make sure the zookeeper is running.
 This system is designed to be fault tolerant, this is achieved by using zookeeper to keep track of the active servers as each one of them will create an ephemeral node with a unique identifier that contains the information about it's socket. The identifiers are sequential, i.e., the server with the lowest id is the oldest and the newest server has the highest id. We call the oldest server 'head' and the newest 'tail'.
 
 The servers are connected from the head to the tail sequential order, forming a chain, as shown in the following image.
+
 ![topology of servers](./doc-images/server-topology.png)
 
 When a client launches, it will find the head and tail in zookeeper and connect to them. Write operations will be sent to the head server while read operations are performed on the tail server, this is to avoid overloading a single machine. The client also listens for any changes in zookeeper to keep track of the head and tail.
+
 ![client and servers topology](./doc-images/client-server-topology.png)
 
 The head server will propagate writes to the other servers, meanwhile the write is performed on all servers, the head is blocked.
+
 ![write sequence](./doc-images/write-sequence.png)
 
 ### Feedback
