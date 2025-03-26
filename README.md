@@ -3,7 +3,7 @@
 ### Overview
 A fast and efficient replicated key-value store written in C. Fault resistent by employing the primary-backup model with passive replication, using ZooKeeper to coordinate the replicas.
 
-This project is developed within the course of Distributed Systems at FCUL.
+This project is developed within the course of Distributed Systems at FCUL, under the coordination of prof. António Casimiro.
 
 **Co-authors**: [Gonçalo Pinto](https://github.com/GoncaloP0710) & [Guilherme Wind](https://github.com/guilherme-wind)
 
