@@ -18,7 +18,8 @@ This project is developed within the course of Distributed Systems at FCUL, unde
 - [License](#license)
 
 ### Getting started
-This program is built for Linux environment, the [zookeeper](https://zookeeper.apache.org/index.html), [protobuf compiler](https://grpc.io/docs/protoc-installation/) and [gcc](https://gcc.gnu.org/) are required to compile and run the project.
+> [!IMPORTANT]
+> This program is built for Linux environment, the [zookeeper](https://zookeeper.apache.org/index.html), [protobuf compiler](https://grpc.io/docs/protoc-installation/) and [gcc](https://gcc.gnu.org/) are required to compile and run the project.
 
 ### Building
 To build the project, create the folders `binary`, `lib` and `dependencies` in the root folder of the project if they don't exist already.
@@ -26,7 +27,8 @@ Run `make clean` to ensure that there are no remaining residue files in these fo
 Execute `make` or `make all` to compile the client and server excutables, the generated excutable files are stored in the `binary` folder.
 
 ### Deployment
-Before deploying servers and clients, please make sure the zookeeper is running.
+> [!IMPORTANT]
+> Before deploying servers and clients, please make sure the zookeeper is running.
 - #### Server
     To launch the server, use the following command:
     ```sh
